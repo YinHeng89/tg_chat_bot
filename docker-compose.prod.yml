@@ -1,0 +1,18 @@
+services:
+  bot:
+    image: yinheng1989/tg-chat-bot:latest
+    container_name: tg-chat-bot
+    restart: unless-stopped
+    ports:
+      - "8025:8000"
+    environment:
+      - WEB_JWT_SECRET=${WEB_JWT_SECRET}
+      - WEB_ADMIN_PASSWORD=${WEB_ADMIN_PASSWORD}
+      - MEMOS_API_URL=${MEMOS_API_URL}
+      - MEMOS_API_KEY=${MEMOS_API_KEY}
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../../tg_bot_data/data:/app/data
+      - ../../tg_bot_data/logs:/app/logs
+      - ../../tg_bot_data/workspace:/app/workspace
+      - /etc/localtime:/etc/localtime:ro
