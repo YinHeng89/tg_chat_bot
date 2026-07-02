@@ -109,7 +109,6 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE,
         "/translate <内容> - 翻译\n"
         "/calc <表达式> - 计算\n"
         "/draw <描述> - 生成图片\n"
-        "/news - 最新新闻\n"
         "/connectors - 查看所有连接器\n"
     )
     is_admin = await _is_admin(update)
@@ -119,9 +118,9 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE,
             "/admin - 管理面板\n"
             "/switch_model <模型> - 切换模型\n"
             "/list_models - 列出可用模型\n"
-            "/stats - 使用统计\n"
+            "/stats [天数] - 使用统计\n"
             "/blacklist add/remove <ID> - 黑名单管理\n"
-            "/broadcast <消息> - 广播消息\n"
+            "/connector enable/disable <名称> - 连接器管理\n"
         )
     await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
 
