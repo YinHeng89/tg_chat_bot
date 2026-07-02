@@ -155,6 +155,17 @@ export default function ModelConfig() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  // 视觉能力二态切换：点击在启用/禁用之间切换
+  const toggleVision = async (m) => {
+    try {
+      const newVision = !(m.capabilities?.vision || false)
+      const res = await apiPost(`/models/${m.id}/vision`, { vision: newVision })
+      setModels(prev => prev.map(x => x.id === m.id ? { ...x, capabilities: res.capabilities } : x))
+      setToast({ type: 'success', text: newVision ? '已启用视觉能力' : '已禁用视觉能力' })
+      setTimeout(() => setToast(null), 2000)
+    } catch (err) { setToast({ type: 'error', text: err.message }); setTimeout(() => setToast(null), 3000) }
+  }
+
   if (loading) return <div className="page-header"><h1>加载中...</h1></div>
 
   const sortedModels = [...models].sort((a, b) => a.sort_order - b.sort_order)
@@ -320,7 +331,22 @@ export default function ModelConfig() {
                   <td>{ALL_PROVIDERS.find(p => p.value === m.provider)?.label || m.provider}</td>
                   <td>
                     {m.model_name || '-'}
-                    {m.capabilities?.vision && <span className="badge badge-success" style={{ marginLeft: 4, fontSize: 10, padding: '1px 5px' }}>视觉</span>}
+                    {(() => {
+                      const vision = !!(m.capabilities?.vision)
+                      return (
+                        <span
+                          onClick={() => toggleVision(m)}
+                          style={{
+                            marginLeft: 4, fontSize: 10, padding: '1px 6px', cursor: 'pointer',
+                            background: vision ? 'var(--success-light)' : 'var(--bg-tertiary)',
+                            color: vision ? 'var(--success)' : 'var(--text-muted)',
+                            borderRadius: 10, border: '1px solid currentColor',
+                            userSelect: 'none', display: 'inline-block', lineHeight: '14px',
+                          }}
+                          title={vision ? '点击禁用视觉能力' : '点击启用视觉能力'}
+                        >视觉</span>
+                      )
+                    })()}
                     {m.capabilities?.available != null && (
                       m.capabilities.available
                         ? <span className="badge badge-success" style={{ marginLeft: 4, fontSize: 10, padding: '1px 5px' }}>可用</span>

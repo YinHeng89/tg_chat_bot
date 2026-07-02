@@ -11,10 +11,11 @@ from storage.database import get_enabled_models
 
 class ChatResult:
     """LLM 调用结果。"""
-    def __init__(self, text: str, prompt_tokens: int = 0, completion_tokens: int = 0):
+    def __init__(self, text: str, prompt_tokens: int = 0, completion_tokens: int = 0, model: str = ""):
         self.text = text
         self.prompt_tokens = prompt_tokens
         self.completion_tokens = completion_tokens
+        self.model = model  # 实际使用的模型名称
 
     @property
     def total_tokens(self) -> int:
@@ -221,6 +222,7 @@ class LLMManager:
         for i, (backend, config) in enumerate(backends):
             try:
                 result = await backend.chat(messages, **kwargs)
+                result.model = config['name']  # 记录实际使用的模型名称
                 logger.info(f"LLM 调用: {config['name']}({config['model_name']}) | prompt={result.prompt_tokens} completion={result.completion_tokens} total={result.total_tokens}")
                 if i > 0:
                     logger.info(f"主模型不可用，fallback 到 {backend._name}")

@@ -1,6 +1,7 @@
 """对话逻辑编排 — bot_id 隔离，结构化上下文。"""
 
 import base64
+import json
 from datetime import datetime
 from telegram import Update
 from telegram.constants import ParseMode
@@ -9,7 +10,7 @@ from telegram.ext import ContextTypes
 from core.llm import llm_manager
 from core.memory import memory_manager
 from plugins.registry import plugin_registry
-from storage.database import record_usage, get_db, compress_conversation, should_compress
+from storage.database import record_usage, get_db, compress_conversation, should_compress, get_model_configs
 from bot.context import build_context, format_context
 from bot.settings import get_bot_structured, get_bot_setting_int, build_agent_prompt, get_bot_allowed_models
 from utils.helpers import extract_urls, truncate_text, md_to_html
@@ -88,8 +89,9 @@ async def handle_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
             result = await llm_manager.chat(messages, max_tokens=2000, allowed_model_ids=allowed_models)
 
         reply = result.text or "抱歉，我没能生成有效的回复。"
-        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model="llm", max_history=max_history)
-        await record_usage(chat_id, user_id, "llm", result.total_tokens)
+        model_name = result.model or "unknown"
+        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, max_history=max_history)
+        await record_usage(chat_id, user_id, model_name, result.total_tokens)
 
         # 自动压缩：超过 30 条消息时，LLM 自动摘要旧消息
         if await should_compress(bot_id, chat_id, 30):
@@ -147,24 +149,39 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_token = context.bot.token
     bot_id = await _get_bot_id(bot_token)
     allowed_models = await get_bot_allowed_models(bot_token)
-    from utils.helpers import supports_vision
 
     # 图片专用模型路由：优先 Bot 指定 → 全局视觉模型 → 碰运气
+    # 视觉能力完全由模型配置中的 capabilities.vision 手动控制
     all_cfgs = llm_manager.get_all()
-    vision_ids = [c["id"] for c in all_cfgs if supports_vision(c["model"]) and c["enabled"]]
+    db_cfgs = {c["id"]: c for c in await get_model_configs()}
+
+    def _model_supports_vision(cfg_id: int) -> bool:
+        db_cfg = db_cfgs.get(cfg_id, {})
+        try:
+            caps = json.loads(db_cfg.get("capabilities") or "{}") if db_cfg.get("capabilities") else {}
+            return bool(caps.get("vision", False))
+        except Exception:
+            return False
+
+    vision_ids = [c["id"] for c in all_cfgs if _model_supports_vision(c["id"]) and c["enabled"]]
     text_ids = [c["id"] for c in all_cfgs if c["enabled"]]
 
     if allowed_models:
         photo_model_ids = [mid for mid in allowed_models if mid in vision_ids]
         if not photo_model_ids:
-            # Bot 允许的模型都不支持视觉 → 尝试全局视觉模型
-            photo_model_ids = vision_ids[:1] if vision_ids else allowed_models  # 至少有一个，否则用原列表碰运气
-            logger.info(f"图片处理: Bot 指定模型都不支持视觉，改用全局视觉模型")
+            # Bot 允许的模型都不支持视觉，再尝试全局视觉模型
+            photo_model_ids = vision_ids[:1] if vision_ids else []
+            if photo_model_ids:
+                logger.info(f"图片处理: Bot 指定模型都不支持视觉，改用全局视觉模型")
     else:
-        photo_model_ids = vision_ids[:1] if vision_ids else text_ids[:1] if text_ids else []
+        photo_model_ids = vision_ids[:1] if vision_ids else []
 
     if not photo_model_ids:
-        logger.warning("图片处理: 无可用视觉模型，可能失败")
+        logger.info("图片处理: 无可用视觉模型，转交给文字流程处理")
+        caption = update.message.caption or ""
+        if caption.strip():
+            await handle_conversation(update, context, chat_id, user_id, caption)
+        return
 
     if not plugin_registry.is_enabled("image_understand"):
         await update.message.reply_text("图片理解功能未启用。")
@@ -200,8 +217,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
                        or user.username or str(user_id))
         text_pfx = f"[{sender_name}]: " if chat.type in ("group", "supergroup") else ""
         await memory_manager.add_user_message(bot_id, chat_id, user_id, f"{text_pfx}[图片] {caption}", max_history)
-        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model="llm", max_history=max_history)
-        await record_usage(chat_id, user_id, "llm", result.total_tokens)
+        model_name = result.model or "unknown"
+        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, max_history=max_history)
+        await record_usage(chat_id, user_id, model_name, result.total_tokens)
 
         reply = truncate_text(reply, 4000)
         quote_mode = await get_bot_setting_int(bot_token, "reply_with_quote", 1)

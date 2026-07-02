@@ -402,14 +402,13 @@ async def add_model(req: dict, user=Depends(get_current_user)):
         kwargs["is_enabled"] = req["is_enabled"]
     if kwargs:
         await update_model_config(model_id, **kwargs)
-    # 自动检测模型能力（视觉 + 可用性）
+    # 自动检测模型可用性
     model_name = req.get("model_name", "")
     api_key = req.get("api_key", "")
     base_url = req.get("base_url", "")
     provider = req.get("provider", "")
     if model_name:
-        from utils.helpers import supports_vision
-        caps = {"vision": supports_vision(model_name), "available": False}
+        caps = {"vision": False, "available": False}
         # 检测可用性：有 Key + 地址时发一个轻量请求
         if api_key and base_url:
             try:
@@ -444,6 +443,22 @@ async def set_primary_model(model_id: int, user=Depends(get_current_user)):
     await set_setting("primary_model_id", str(model_id))
     await llm_manager.reload()
     return {"success": True, "primary_model_id": model_id}
+
+
+@app.post("/api/models/{model_id}/vision")
+async def toggle_model_vision(model_id: int, req: dict, user=Depends(get_current_user)):
+    """手动切换模型视觉能力：绿色=支持，灰色=不支持。"""
+    cfg = await get_model_config(model_id)
+    if not cfg:
+        raise HTTPException(status_code=404, detail="模型不存在")
+    try:
+        caps = json.loads(cfg.get("capabilities") or "{}")
+    except Exception:
+        caps = {}
+    caps["vision"] = bool(req.get("vision", not caps.get("vision", False)))
+    await update_model_config(model_id, capabilities=json.dumps(caps))
+    await llm_manager.reload()
+    return {"success": True, "capabilities": caps}
 
 
 @app.delete("/api/models/{model_id}")
