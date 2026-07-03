@@ -1,352 +1,793 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="TG AI Chat Bot - Lightweight Telegram AI bot platform">
-<title>TG AI Chat Bot</title>
-<style>
-:root {
-  --bg: #0a0a0f; --bg2: #12121a; --bg3: #1a1a28; --border: #2a2a3a;
-  --text: #e4e4ed; --text2: #9494a8; --accent: #6366f1; --accent2: #8b5cf6;
-  --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
-  --radius: 12px; --max-w: 1200px;
-  --font: 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --mono: 'JetBrains Mono','Fira Code',monospace;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7}
-a{color:var(--accent);text-decoration:none}
-.container{max-width:var(--max-w);margin:0 auto;padding:0 24px}
-.section{padding:100px 0}
-.section-title{font-size:2rem;font-weight:700;margin-bottom:12px}
-.section-sub{color:var(--text2);font-size:1.05rem;margin-bottom:48px;max-width:600px}
-.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600}
-.badge-accent{background:rgba(99,102,241,.15);color:var(--accent)}
-.badge-success{background:rgba(34,197,94,.15);color:var(--success)}
-
-nav{position:fixed;top:0;width:100%;z-index:100;backdrop-filter:blur(12px);background:rgba(10,10,15,.85);border-bottom:1px solid var(--border)}
-nav .container{display:flex;align-items:center;justify-content:space-between;height:60px}
-.nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem}
-.nav-links{display:flex;gap:24px;align-items:center}
-.nav-links a{color:var(--text2);font-size:.9rem;transition:color .2s}
-.nav-links a:hover{color:var(--text)}
-.lang-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.85rem;transition:all .2s;font-family:var(--font)}
-.lang-btn:hover{border-color:var(--accent);color:var(--accent)}
-
-.hero{padding:160px 0 100px;text-align:center;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(99,102,241,.08)0%,transparent 70%);pointer-events:none}
-.hero h1{font-size:3.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2),#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
-.hero p{font-size:1.2rem;color:var(--text2);max-width:640px;margin:0 auto 36px}
-.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:30px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .25s;border:none;font-family:var(--font)}
-.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,.3)}
-.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-
-.stats-bar{display:flex;justify-content:center;gap:60px;margin-top:60px;flex-wrap:wrap}
-.stat-item{text-align:center}
-.stat-num{font-size:2.5rem;font-weight:800;color:var(--accent)}
-.stat-label{font-size:.85rem;color:var(--text2);margin-top:4px}
-
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.feature-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;transition:all .3s;position:relative;overflow:hidden}
-.feature-card:hover{border-color:var(--accent);transform:translateY(-4px)}
-.feature-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:0;transition:opacity .3s}
-.feature-card:hover::before{opacity:1}
-.feature-icon{width:48px;height:48px;background:rgba(99,102,241,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
-.feature-icon svg{width:24px;height:24px;stroke:var(--accent)}
-.feature-card h3{font-size:1.15rem;margin-bottom:8px}
-.feature-card p{font-size:.9rem;color:var(--text2)}
-
-.plugins-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
-.plugin-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:flex;gap:16px;align-items:flex-start;transition:all .3s}
-.plugin-card:hover{border-color:var(--accent2)}
-.plugin-card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.plugin-card-icon svg{width:22px;height:22px}
-.plugin-card-body h4{font-size:1rem;margin-bottom:4px}
-.plugin-card-body p{font-size:.85rem;color:var(--text2);line-height:1.5}
-.plugin-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;margin-top:6px;margin-right:4px}
-.tag-auto{background:rgba(34,197,94,.12);color:var(--success)}
-.tag-manual{background:rgba(245,158,11,.12);color:var(--warning)}
-
-.arch-diagram{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:40px;font-family:var(--mono);font-size:.85rem;line-height:1.9;color:var(--text2);overflow-x:auto;white-space:pre}
-.arch-diagram .key{color:var(--accent)}
-.arch-diagram .val{color:var(--success)}
-
-.code-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;font-family:var(--mono);font-size:.85rem;line-height:1.8;overflow-x:auto}
-
-.timeline{position:relative;padding-left:32px}
-.timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--border)}
-.timeline-item{position:relative;margin-bottom:32px}
-.timeline-item::before{content:'';position:absolute;left:-26px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
-.timeline-item h4{font-size:1rem;margin-bottom:4px}
-.timeline-item p{font-size:.9rem;color:var(--text2)}
-
-footer{border-top:1px solid var(--border);padding:40px 0;text-align:center;color:var(--text2);font-size:.85rem}
-footer a{color:var(--text2)}footer a:hover{color:var(--accent)}
-
-.menu-toggle{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:8px}
-@media(max-width:768px){
-  .nav-links{display:none;position:fixed;top:60px;left:0;right:0;background:var(--bg2);flex-direction:column;padding:20px;gap:16px;border-bottom:1px solid var(--border)}
-  .nav-links.open{display:flex}
-  .menu-toggle{display:block}
-  .hero h1{font-size:2.2rem}
-  .stats-bar{gap:30px}
-  .stat-num{font-size:1.8rem}
-  .section{padding:60px 0}
-  .features-grid{grid-template-columns:1fr}
-  .plugins-grid{grid-template-columns:1fr}
-}
-.fade-in{opacity:0;transform:translateY(24px);transition:all .6s ease}
-.fade-in.visible{opacity:1;transform:translateY(0)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TG AI Chat Bot - A lightweight Telegram multi-bot AI chat system with multi-model support, plugin extensions, and web management panel. 轻量级 Telegram 多 Bot AI 聊天机器人系统。">
+  <title>TG AI Chat Bot</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232563EB'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'%3ETG%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- ===== SVG Icon Library ===== -->
+  <svg style="display:none" aria-hidden="true">
+    <defs>
+      <!-- Robot/Bot -->
+      <symbol id="icon-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="3"/>
+        <circle cx="8" cy="11" r="1.5" fill="currentColor" stroke="none"/>
+        <circle cx="16" cy="11" r="1.5" fill="currentColor" stroke="none"/>
+        <path d="M12 15.5v1M8 5V3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+        <circle cx="11.5" cy="3" r=".5" fill="currentColor" stroke="none"/>
+        <circle cx="12.5" cy="3" r=".5" fill="currentColor" stroke="none"/>
+      </symbol>
+      <!-- Multi-bot / Layers -->
+      <symbol id="icon-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </symbol>
+      <!-- Brain / LLM -->
+      <symbol id="icon-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 6a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V16h-4v-2.5C8.8 12.8 8 11.5 8 10a4 4 0 0 1 4-4z"/>
+        <path d="M10 18h4v3h-4z"/>
+        <path d="M9 4C5.7 4 3 6.7 3 10c0 2 .9 3.7 2.4 4.8"/>
+        <path d="M15 4c3.3 0 6 2.7 6 6 0 2-.9 3.7-2.4 4.8"/>
+      </symbol>
+      <!-- Plugin / Puzzle -->
+      <symbol id="icon-plugin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0-1.4L11.5 1.7a1 1 0 0 0-1.4 0l-1.4 1.4"/>
+        <path d="M3 7l1.4 1.4a1 1 0 0 0 1.4 0L10 4.2a1 1 0 0 0 0-1.4L8.6 1.4"/>
+        <path d="M18 11l2 2-4 4-2-2"/>
+        <path d="M3 21l8-8"/>
+        <path d="M21 3l-8 8"/>
+        <path d="M13 7l4 4"/>
+      </symbol>
+      <!-- Shield / Security -->
+      <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M8.5 11.5l2 2 5-5"/>
+      </symbol>
+      <!-- Globe / Language -->
+      <symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M2 12h20"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </symbol>
+      <!-- Docker -->
+      <symbol id="icon-docker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="6" width="20" height="13" rx="3"/>
+        <path d="M6 9h2v2H6zM10 9h2v2h-2zM14 9h2v2h-2zM8 12h2v2H8zM12 12h2v2h-2zM6 15h12v1H6z"/>
+        <path d="M19 9l1-3-2-1-1 3"/>
+        <circle cx="12" cy="3" r=".8" fill="currentColor" stroke="none"/>
+        <circle cx="14" cy="4.5" r=".8" fill="currentColor" stroke="none"/>
+        <circle cx="10" cy="4.5" r=".8" fill="currentColor" stroke="none"/>
+      </symbol>
+      <!-- Memory / Database -->
+      <symbol id="icon-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </symbol>
+      <!-- Code -->
+      <symbol id="icon-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </symbol>
+      <!-- Rocket / Quick Start -->
+      <symbol id="icon-rocket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+        <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+        <path d="M9 12H4l.5-3 3 3z"/>
+      </symbol>
+      <!-- Monitor / Dashboard -->
+      <symbol id="icon-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8"/>
+        <path d="M12 17v4"/>
+      </symbol>
+      <!-- Arrow Right -->
+      <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </symbol>
+      <!-- Arrow Down -->
+      <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <polyline points="19 12 12 19 5 12"/>
+      </symbol>
+      <!-- GitHub -->
+      <symbol id="icon-github" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.73.083-.73 1.205.085 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.418-1.305.762-1.605-2.665-.305-5.466-1.335-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.895-.015 3.285 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z"/>
+      </symbol>
+      <!-- License -->
+      <symbol id="icon-license" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </symbol>
+      <!-- Clipboard / Features -->
+      <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+        <rect x="8" y="2" width="8" height="4" rx="1"/>
+      </symbol>
+      <!-- Check -->
+      <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </symbol>
+      <!-- Menu (Hamburger) -->
+      <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </symbol>
+      <!-- Close -->
+      <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </symbol>
+      <!-- Star -->
+      <symbol id="icon-star" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </symbol>
+      <!-- Terminal -->
+      <symbol id="icon-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 17 10 11 4 5"/>
+        <line x1="12" y1="19" x2="20" y2="19"/>
+      </symbol>
+      <!-- Image -->
+      <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </symbol>
+    </defs>
+  </svg>
 
-<nav>
-  <div class="container">
-    <div class="nav-logo">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="url(#ng)"/><path d="M8 10a3 3 0 013-3h6a3 3 0 013 3v1a3 3 0 01-3 3h-4l-2 2v-2a3 3 0 01-3-3v-1z" fill="#fff"/><circle cx="12" cy="13" r="1" fill="#6366f1"/><circle cx="16" cy="13" r="1" fill="#6366f1"/><defs><linearGradient id="ng" x1="0" y1="0" x2="28" y2="28"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
-      <span>TG Chat Bot</span>
-    </div>
-    <div class="nav-links" id="navLinks">
-      <a href="#features" data-i18n="nav_features">Features</a>
-      <a href="#plugins" data-i18n="nav_plugins">Plugins</a>
-      <a href="#architecture" data-i18n="nav_arch">Architecture</a>
-      <a href="#security" data-i18n="nav_security">Security</a>
-      <a href="#deploy" data-i18n="nav_deploy">Deploy</a>
-      <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN / 中文</button>
-    </div>
-    <button class="menu-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-    </button>
-  </div>
-</nav>
-
-<section class="hero">
-  <div class="container">
-    <h1 data-i18n="hero_title">Smart Telegram Bot<br>Multi-Instance, Multi-Model</h1>
-    <p data-i18n="hero_sub">Lightweight Telegram AI chatbot platform. 9 built-in plugins, 12+ LLM providers, hot-swappable multi-bot management, Web admin panel. Deploy in minutes.</p>
-    <div class="hero-btns">
-      <a href="#deploy" class="btn btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        <span data-i18n="hero_btn">Quick Start</span>
+  <!-- ===== Navigation ===== -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#home" class="nav-logo" aria-label="Home">
+        <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
+          <rect width="100" height="100" rx="20" fill="url(#logo-grad)"/>
+          <text x="50" y="66" font-size="44" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-weight="700">TG</text>
+          <defs>
+            <linearGradient id="logo-grad" x1="0" y1="0" x2="100" y2="100">
+              <stop offset="0%" stop-color="#2563EB"/>
+              <stop offset="100%" stop-color="#7C3AED"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="nav-logo-text">TG AI Chat Bot</span>
       </a>
-      <a href="https://github.com/yinheng1989/tg_chat_bot" class="btn btn-outline" target="_blank">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        GitHub
-      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#features" data-i18n-nav="features">Features</a></li>
+        <li><a href="#architecture" data-i18n-nav="architecture">Architecture</a></li>
+        <li><a href="#plugins" data-i18n-nav="plugins">Plugins</a></li>
+        <li><a href="#quickstart" data-i18n-nav="quickstart">Quick Start</a></li>
+        <li><a href="#faq" data-i18n-nav="faq">FAQ</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="zh" aria-label="Switch to Chinese">中文</button>
+          <span class="lang-divider">|</span>
+          <button class="lang-btn" data-lang="en" aria-label="Switch to English">EN</button>
+        </div>
+        <a href="https://github.com/yinheng1998/tg_chat_bot" target="_blank" rel="noopener" class="btn-ghost btn-sm" aria-label="GitHub">
+          <svg width="20" height="20"><use href="#icon-github"/></svg>
+          <span>GitHub</span>
+        </a>
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
+          <svg width="24" height="24" id="menu-icon"><use href="#icon-menu"/></svg>
+        </button>
+      </div>
     </div>
-    <div class="stats-bar">
-      <div class="stat-item"><div class="stat-num">9</div><div class="stat-label" data-i18n="stat_plugins">Plugins</div></div>
-      <div class="stat-item"><div class="stat-num">12+</div><div class="stat-label" data-i18n="stat_providers">LLM Providers</div></div>
-      <div class="stat-item"><div class="stat-num">5</div><div class="stat-label" data-i18n="stat_personas">AI Personas</div></div>
-      <div class="stat-item"><div class="stat-num">3</div><div class="stat-label" data-i18n="stat_backends">Backend Types</div></div>
+  </nav>
+
+  <!-- ===== Hero Section ===== -->
+  <section class="hero" id="home">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+      <div class="hero-glow hero-glow-1"></div>
+      <div class="hero-glow hero-glow-2"></div>
     </div>
-  </div>
-</section>
-
-<section class="section" id="features">
-  <div class="container">
-    <h2 class="section-title" data-i18n="features_title">Core Capabilities</h2>
-    <p class="section-sub" data-i18n="features_sub">All-in-one bot platform with professional management panel</p>
-    <div class="features-grid" id="featuresGrid"></div>
-  </div>
-</section>
-
-<section class="section" id="plugins" style="background:var(--bg2)">
-  <div class="container">
-    <h2 class="section-title" data-i18n="plugins_title">Plugin Ecosystem</h2>
-    <p class="section-sub" data-i18n="plugins_sub">9 ready-to-use connectors. AI auto-invokes via Function Calling or manual commands.</p>
-    <div class="plugins-grid" id="pluginsGrid"></div>
-  </div>
-</section>
-
-<section class="section" id="architecture">
-  <div class="container">
-    <h2 class="section-title" data-i18n="arch_title">System Architecture</h2>
-    <p class="section-sub" data-i18n="arch_sub">Single-process async design: Telegram polling + FastAPI share asyncio event loop</p>
-    <div class="arch-diagram">
-<span class="key">Telegram API</span>              <span class="key">Web Browser</span>
-    |                          |
-    v                          v
-<span class="val">Bot Polling</span>                <span class="val">FastAPI :8000</span>
-    |                          |
-    +-----------+--------------+
-                |
-                v
-    <span class="val">asyncio Event Loop</span>
-                |
-    +-----------+--------------+
-    |           |              |
-    v           v              v
-<span class="key">BotManager</span>  <span class="key">LLMManager</span>    <span class="key">PluginRegistry</span>
-    |           |              |
-  Bot#1       OpenAI        9 Connectors
-  Bot#2       DeepSeek      Function Calling
-  Bot#3       Claude        Auto / Manual
-  ...         Gemini
-              Ollama
-              ...
-                |
-                v
-          <span class="val">SQLite</span> (WAL mode)
-         conversations / sessions
-         bots / stats / settings
-         models / plugins / blacklist
+    <div class="hero-content">
+      <div class="hero-badge" data-i18n="hero_badge">Open Source / MIT License</div>
+      <h1 class="hero-title">
+        <span data-i18n="hero_title_1">Lightweight Telegram</span>
+        <span class="hero-title-highlight" data-i18n="hero_title_2">Multi-Bot AI</span>
+        <span data-i18n="hero_title_3">Chat System</span>
+      </h1>
+      <p class="hero-desc" data-i18n="hero_desc">
+        A production-ready Telegram chatbot platform supporting multiple LLM backends, dynamic bot management, plugin extensions, and a full-featured web admin panel. One click deploy, infinitely extendable.
+      </p>
+      <div class="hero-btns">
+        <a href="#quickstart" class="btn-primary">
+          <svg width="18" height="18"><use href="#icon-rocket"/></svg>
+          <span data-i18n="hero_btn_start">Get Started</span>
+        </a>
+        <a href="https://github.com/yinheng1998/tg_chat_bot" target="_blank" rel="noopener" class="btn-outline">
+          <svg width="18" height="18"><use href="#icon-github"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-num">12+</span>
+          <span class="hero-stat-label" data-i18n="hero_stat_models">LLM Providers</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">9</span>
+          <span class="hero-stat-label" data-i18n="hero_stat_plugins">Built-in Plugins</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">7</span>
+          <span class="hero-stat-label" data-i18n="hero_stat_layers">Architecture Layers</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">30+</span>
+          <span class="hero-stat-label" data-i18n="hero_stat_apis">REST APIs</span>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="section" style="background:var(--bg2)">
-  <div class="container">
-    <h2 class="section-title" data-i18n="bot_title">Per-Bot Customization</h2>
-    <p class="section-sub" data-i18n="bot_sub">Each bot instance has independent personality, model selection, and conversation settings</p>
-    <div class="features-grid" id="botGrid"></div>
-  </div>
-</section>
+  <!-- ===== Features Section ===== -->
+  <section class="section" id="features">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="features_tag">Core Capabilities</span>
+        <h2 class="section-title" data-i18n="features_title">Everything You Need to Build Smart Telegram Bots</h2>
+        <p class="section-desc" data-i18n="features_desc">From multi-model inference to plugin orchestration, from session memory to web management &mdash; all built in.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="--c1:#2563EB;--c2:#3B82F6">
+            <svg width="28" height="28"><use href="#icon-layers"/></svg>
+          </div>
+          <h3 data-i18n="feat_multi_title">Multi-Bot Hot Management</h3>
+          <p data-i18n="feat_multi_desc">Add, remove, start, or stop Bot instances anytime through the Web panel. No service restart needed. Each Bot has independent personality, model selection, and group chat policies.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--c1:#7C3AED;--c2:#8B5CF6">
+            <svg width="28" height="28"><use href="#icon-brain"/></svg>
+          </div>
+          <h3 data-i18n="feat_model_title">12+ LLM Backends with Auto Fallback</h3>
+          <p data-i18n="feat_model_desc">Support OpenAI, DeepSeek, Claude, Gemini, Qwen, Moonshot, Zhipu, StepFun, MiniMax, Baidu Wenxin, ByteDance Doubao, and Ollama. Primary model fails? Automatic fallback to backup &mdash; zero downtime.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--c1:#059669;--c2:#10B981">
+            <svg width="28" height="28"><use href="#icon-plugin"/></svg>
+          </div>
+          <h3 data-i18n="feat_plugin_title">Function Calling Plugin System</h3>
+          <p data-i18n="feat_plugin_desc">9 built-in plugins: web search, URL summarization, weather, calculator, translation, image generation, CLI sandbox, image understanding, and Memos integration. Extend via clean Python plugin interface.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--c1:#DC2626;--c2:#EF4444">
+            <svg width="28" height="28"><use href="#icon-shield"/></svg>
+          </div>
+          <h3 data-i18n="feat_security_title">Security &amp; Sandboxing</h3>
+          <p data-i18n="feat_security_desc">JWT authentication + recovery code, blacklist, rate limiting, whitelist mode, CLI sandbox with resource limits and dangerous-command interception, plus automatic log data sanitization.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--c1:#D97706;--c2:#F59E0B">
+            <svg width="28" height="28"><use href="#icon-database"/></svg>
+          </div>
+          <h3 data-i18n="feat_memory_title">Isolated Session Memory</h3>
+          <p data-i18n="feat_memory_desc">bot_id + chat_id isolation ensures each conversation stays independent. Auto-summarization compresses conversations exceeding 30 turns while retaining the last 8 messages for context continuity.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--c1:#2563EB;--c2:#06B6D4">
+            <svg width="28" height="28"><use href="#icon-monitor"/></svg>
+          </div>
+          <h3 data-i18n="feat_web_title">Full-Featured Web Admin Panel</h3>
+          <p data-i18n="feat_web_desc">React + Vite dashboard with real-time statistics, bot management, model configuration, plugin toggles, blacklist control, session viewer, diagnostics, and per-bot personality settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section class="section" id="models">
-  <div class="container">
-    <h2 class="section-title" data-i18n="model_title">Model Configuration</h2>
-    <p class="section-sub" data-i18n="model_sub">14 providers, 3 backend types, manual vision toggle, availability auto-detect + recheck</p>
-    <div class="features-grid" id="modelGrid"></div>
-  </div>
-</section>
+  <!-- ===== Architecture Section ===== -->
+  <section class="section section-dark" id="architecture">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag section-tag-light" data-i18n="arch_tag">System Design</span>
+        <h2 class="section-title" data-i18n="arch_title">7-Layer Clean Architecture</h2>
+        <p class="section-desc" data-i18n="arch_desc">Separation of concerns from the ground up. Each layer has a single responsibility, making the system easy to understand, maintain, and extend.</p>
+      </div>
+      <div class="arch-diagram">
+        <div class="arch-layer arch-layer-1" style="--delay:0.1s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">01</span>
+            <div>
+              <h4 data-i18n="arch_l1_title">Telegram Bot Layer</h4>
+              <p data-i18n="arch_l1_desc">Message routing, 20+ commands, multi-modal conversation, structured context injection</p>
+            </div>
+            <span class="arch-layer-badge">bot/</span>
+          </div>
+        </div>
+        <div class="arch-layer arch-layer-2" style="--delay:0.2s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">02</span>
+            <div>
+              <h4 data-i18n="arch_l2_title">Core Logic Layer</h4>
+              <p data-i18n="arch_l2_desc">LLM abstraction (OpenAI / Anthropic / Ollama), session memory, runtime config, Bot instance manager</p>
+            </div>
+            <span class="arch-layer-badge">core/</span>
+          </div>
+        </div>
+        <div class="arch-layer arch-layer-3" style="--delay:0.3s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">03</span>
+            <div>
+              <h4 data-i18n="arch_l3_title">Plugin / Connector System</h4>
+              <p data-i18n="arch_l3_desc">9 built-in plugins, uniform interface, LLM auto tool-calling, manual command trigger</p>
+            </div>
+            <span class="arch-layer-badge">plugins/</span>
+          </div>
+        </div>
+        <div class="arch-layer arch-layer-4" style="--delay:0.4s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">04</span>
+            <div>
+              <h4 data-i18n="arch_l4_title">Storage Layer</h4>
+              <p data-i18n="arch_l4_desc">SQLite with 7 relational tables, async I/O, auto-migration, conversation summarization</p>
+            </div>
+            <span class="arch-layer-badge">storage/</span>
+          </div>
+        </div>
+        <div class="arch-layer arch-layer-5" style="--delay:0.5s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">05</span>
+            <div>
+              <h4 data-i18n="arch_l5_title">Utility Layer</h4>
+              <p data-i18n="arch_l5_desc">Structured logging with auto-redaction, Markdown-to-Telegram-HTML converter</p>
+            </div>
+            <span class="arch-layer-badge">utils/</span>
+          </div>
+        </div>
+        <div class="arch-layer arch-layer-6" style="--delay:0.6s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">06</span>
+            <div>
+              <h4 data-i18n="arch_l6_title">Web API Layer</h4>
+              <p data-i18n="arch_l6_desc">FastAPI with 30+ REST endpoints, JWT auth + bcrypt, static frontend serving</p>
+            </div>
+            <span class="arch-layer-badge">web/</span>
+          </div>
+        </div>
+        <div class="arch-layer arch-layer-7" style="--delay:0.7s">
+          <div class="arch-layer-inner">
+            <span class="arch-layer-num">07</span>
+            <div>
+              <h4 data-i18n="arch_l7_title">React Frontend</h4>
+              <p data-i18n="arch_l7_desc">Dashboard, bot/model/plugin management, blacklist, sessions, diagnostics, per-bot personality editor</p>
+            </div>
+            <span class="arch-layer-badge">frontend/</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section class="section" id="security" style="background:var(--bg2)">
-  <div class="container">
-    <h2 class="section-title" data-i18n="sec_title">Security Design</h2>
-    <p class="section-sub" data-i18n="sec_sub">Multiple layers of protection for production deployment</p>
-    <div class="features-grid" id="secGrid"></div>
-  </div>
-</section>
+  <!-- ===== Plugins Section ===== -->
+  <section class="section" id="plugins">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="plugins_tag">Extensible Plugins</span>
+        <h2 class="section-title" data-i18n="plugins_title">9 Built-in Connectors, Unlimited Possibilities</h2>
+        <p class="section-desc" data-i18n="plugins_desc">LLM can automatically decide which tool to invoke through Function Calling, or users can trigger plugins manually via slash commands.</p>
+      </div>
+      <div class="plugins-grid">
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-search">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_web_search">Web Search</h4>
+            <p data-i18n="plugin_web_search_desc">DuckDuckGo with DDG Instant Answer API dual fallback</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-url">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_url">URL Summary</h4>
+            <p data-i18n="plugin_url_desc">Fetch and extract article content via httpx + BeautifulSoup</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-weather">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_weather">Weather</h4>
+            <p data-i18n="plugin_weather_desc">Global weather query via wttr.in free API</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-calc">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_calc">Calculator</h4>
+            <p data-i18n="plugin_calc_desc">AST-based safe expression evaluator with math functions</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-translate">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_translate">Translate</h4>
+            <p data-i18n="plugin_translate_desc">Multi-language translation via LLM</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-image">
+            <svg width="24" height="24"><use href="#icon-image"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_image_gen">Image Generation</h4>
+            <p data-i18n="plugin_image_gen_desc">DALL-E image generation via OpenAI API</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-cli">
+            <svg width="24" height="24"><use href="#icon-terminal"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_cli">CLI Sandbox</h4>
+            <p data-i18n="plugin_cli_desc">Container shell execution with resource limits and safety blacklist</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-image-understand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_image_understand">Image Understanding</h4>
+            <p data-i18n="plugin_image_understand_desc">Multi-modal model auto-routing, base64 image direct upload</p>
+          </div>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-card-icon plugin-icon-memos">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </div>
+          <div>
+            <h4 data-i18n="plugin_memos">Memos</h4>
+            <p data-i18n="plugin_memos_desc">Personal knowledge base integration &mdash; list, search, create, update, delete</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section class="section" id="deploy">
-  <div class="container">
-    <h2 class="section-title" data-i18n="deploy_title">Deploy in 3 Steps</h2>
-    <p class="section-sub" data-i18n="deploy_sub">Single Docker container, ready in minutes</p>
-    <div class="timeline" id="deployTimeline"></div>
-    <div class="features-grid" id="deployCards" style="margin-top:32px"></div>
-  </div>
-</section>
+  <!-- ===== Tech Stack Section ===== -->
+  <section class="section section-alt" id="techstack">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="tech_tag">Technology Stack</span>
+        <h2 class="section-title" data-i18n="tech_title">Modern &amp; Production-Ready Stack</h2>
+        <p class="section-desc" data-i18n="tech_desc">Carefully selected battle-tested technologies that balance performance, maintainability, and developer experience.</p>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_bot">Bot Framework</h4>
+          <div class="tech-items">
+            <span class="tech-badge">python-telegram-bot v21.10</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_llm">LLM &amp; AI</h4>
+          <div class="tech-items">
+            <span class="tech-badge">OpenAI SDK</span>
+            <span class="tech-badge">Anthropic SDK</span>
+            <span class="tech-badge">Ollama</span>
+            <span class="tech-badge">Function Calling</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_backend">Backend</h4>
+          <div class="tech-items">
+            <span class="tech-badge">Python 3.11+</span>
+            <span class="tech-badge">FastAPI</span>
+            <span class="tech-badge">Uvicorn</span>
+            <span class="tech-badge">SQLite + aiosqlite</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_frontend">Frontend</h4>
+          <div class="tech-items">
+            <span class="tech-badge">React 18</span>
+            <span class="tech-badge">React Router 6</span>
+            <span class="tech-badge">Vite 5</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_auth">Auth &amp; Security</h4>
+          <div class="tech-items">
+            <span class="tech-badge">JWT (HS256)</span>
+            <span class="tech-badge">bcrypt</span>
+            <span class="tech-badge">Recovery Code</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_tools">Tools &amp; Libraries</h4>
+          <div class="tech-items">
+            <span class="tech-badge">httpx</span>
+            <span class="tech-badge">BeautifulSoup4</span>
+            <span class="tech-badge">tabulate</span>
+            <span class="tech-badge">loguru</span>
+            <span class="tech-badge">ddgs</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h4 class="tech-group-title" data-i18n="tech_cat_deploy">Deployment</h4>
+          <div class="tech-items">
+            <span class="tech-badge">Docker (Multi-stage)</span>
+            <span class="tech-badge">Docker Compose</span>
+            <span class="tech-badge">Buildx (amd64+arm64)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<footer>
-  <div class="container">
-    <p data-i18n="footer_1">TG AI Chat Bot -- Apache 2.0 License</p>
-    <p><a href="https://github.com/yinheng1989/tg_chat_bot" data-i18n="footer_2">View on GitHub</a></p>
-    <br>
-    <p data-i18n="footer_3">Built with Python + FastAPI + React + SQLite + Docker</p>
-  </div>
-</footer>
+  <!-- ===== Quick Start Section ===== -->
+  <section class="section" id="quickstart">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="qs_tag">Get Started</span>
+        <h2 class="section-title" data-i18n="qs_title">Deploy in Seconds</h2>
+        <p class="section-desc" data-i18n="qs_desc">Choose the deployment method that fits your workflow.</p>
+      </div>
+      <div class="qs-grid">
+        <div class="qs-card">
+          <div class="qs-card-header">
+            <svg width="24" height="24"><use href="#icon-docker"/></svg>
+            <h3 data-i18n="qs_docker_title">Docker (Recommended)</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">Shell</span>
+              <button class="code-copy-btn" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <pre><code># Clone the repository
+git clone https://github.com/yinheng1998/tg_chat_bot.git
+cd tg_chat_bot
 
-<script>
-// ==== i18n data ====
-const T = {};
-T.en = {
-  nav_features:'Features',nav_plugins:'Plugins',nav_arch:'Architecture',nav_security:'Security',nav_deploy:'Deploy',
-  hero_title:'Smart Telegram Bot<br>Multi-Instance, Multi-Model',
-  hero_sub:'Lightweight Telegram AI chatbot platform. 9 plugins, 12+ LLM providers, hot-swappable multi-bot, Web admin panel.',
-  hero_btn:'Quick Start',
-  stat_plugins:'Plugins',stat_providers:'LLM Providers',stat_personas:'AI Personas',stat_backends:'Backend Types',
-  features_title:'Core Capabilities',features_sub:'All-in-one bot platform with professional management panel',
-  f1_t:'Multi-Bot Hot Management',f1_d:'Add, remove, enable, disable bots in real-time. Individual personality, model, memory per bot.',
-  f2_t:'Multi-Model + Fallback',f2_d:'12+ providers. Auto-fallback when primary model fails.',
-  f3_t:'9 Built-in Plugins',f3_d:'Web search, URL summary, weather, translation, calculator, image gen/understand, CLI sandbox, Memos.',
-  f4_t:'Web Admin Panel',f4_d:'React SPA with dashboard, bots, models, plugins, sessions, diagnostics. Dark theme.',
-  f5_t:'Context Builder',f5_d:'XML context injection. Group info, sender, reply-to, mentions. Auto-compress at 30 messages.',
-  f6_t:'Secure by Default',f6_d:'bcrypt hashing, JWT auth, recovery codes, CLI sandbox limits, log redaction.',
-  plugins_title:'Plugin Ecosystem',plugins_sub:'9 connectors. AI auto-invokes via Function Calling or manual commands.',
-  p1_t:'Web Search',p1_d:'DuckDuckGo search. AI auto-invoked. Top 5 results with snippets.',
-  p2_t:'URL Summary',p2_d:'Auto-detects URLs. Extracts content with BeautifulSoup. Up to 3000 chars.',
-  p3_t:'Weather',p3_d:'Real-time weather via wttr.in free API. City name query.',
-  p4_t:'Translate',p4_d:'LLM-powered multi-language translation. Any language pair.',
-  p5_t:'Calculator',p5_d:'AST-based safe eval. sqrt(), sin(), cos(), log(), arithmetic.',
-  p6_t:'Image Generation',p6_d:'DALL-E 3 compatible text-to-image. Returns image URL.',
-  p7_t:'Image Understanding',p7_d:'Multi-modal vision. Routes to vision-capable models.',
-  p8_t:'CLI Sandbox',p8_d:'bash -c execution. Blacklist. 256MB RAM + 30s CPU limits.',
-  p9_t:'Memos Notes',p9_d:'Memos API. Create, search, update, delete notes.',
-  arch_title:'System Architecture',arch_sub:'Single-process async: Telegram polling + FastAPI share event loop',
-  bot_title:'Per-Bot Customization',bot_sub:'Independent personality, model, and conversation per bot instance',
-  b1_t:'Personality / Identity',b1_d:'5 presets: Companion, Expert, Creative, Mentor, Custom. SOUL traits + identity + system prompt.',
-  b2_t:'Model Assignment',b2_d:'Per-bot allowed_model_ids. Separate routing for text vs vision.',
-  b3_t:'Group Chat Control',b3_d:'3 modes: off / @mentioned / all. Rate limiting + context window.',
-  b4_t:'Memory Isolation',b4_d:'bot_id+chat_id joint index. Auto-compress at 30 msgs.',
-  model_title:'Model Configuration',model_sub:'14 providers, 3 backend types, vision toggle, auto-detect + recheck',
-  m1_t:'Supported Providers',m1_d:'OpenAI, DeepSeek, Anthropic Claude, Google Gemini, Qwen, Moonshot(Kimi), GLM, Step, MiniMax, ERNIE, Doubao, Ollama, Custom OpenAI-Compatible',
-  m2_t:'Backend Types',m2_d:'OpenAI Compatible / Anthropic Native (Claude SDK) / Ollama Local',
-  m3_t:'Smart Detection',m3_d:'Auto-tests on add. One-click recheck. Vision toggle per model.',
-  sec_title:'Security Design',sec_sub:'Multi-layer protection for production',
-  s1_t:'Password & Recovery',s1_d:'bcrypt hashed. 12-char recovery code for reset. Min 6-char.',
-  s2_t:'JWT Authentication',s2_d:'HS256, 24h expiry. All /api/* require Bearer token.',
-  s3_t:'CLI Sandbox',s3_d:'Dangerous command blacklist. 256MB + 30s CPU limits.',
-  s4_t:'Log Redaction',s4_d:'Auto-masks API keys, JWT, passwords. 7-day rotation + zip.',
-  deploy_title:'Deploy in 3 Steps',deploy_sub:'Single Docker container, ready in minutes',
-  d1_t:'1. Create .env file',d1_d:'WEB_JWT_SECRET=$(openssl rand -hex 32)',
-  d2_t:'2. docker compose up -d',d2_d:'docker compose -f docker-compose.prod.yml up -d',
-  d3_t:'3. Open Web Panel & Setup',d3_d:'Visit http://your-ip:8025 -- Set password, Save recovery code, Add model, Add Bot',
-  c1_t:'Docker',c1_d:'Multi-stage build (Node+Python). python:3.11-slim. Healthcheck via /healthz.',
-  c2_t:'Volumes',c2_d:'3 persistent volumes: data/ (SQLite), logs/ (rotated), workspace/ (CLI).',
-  c3_t:'Multi-Arch',c3_d:'linux/amd64 + linux/arm64. Pre-built on Docker Hub. docker buildx.',
-  footer_1:'TG AI Chat Bot -- Apache 2.0 License',footer_2:'View on GitHub',
-  footer_3:'Built with Python + FastAPI + React + SQLite + Docker',
-  tag_auto:'AUTO',tag_manual:'MANUAL',
-};
-T.zh = { ...T.en,
-  nav_features:'Features',nav_plugins:'Plugins',nav_arch:'Architecture',nav_security:'Security',nav_deploy:'Deploy',
-  hero_title:'Smart Telegram Bot<br>Multi-Instance, Multi-Model',
-  hero_sub:'Lightweight Telegram AI chatbot platform. 9 plugins, 12+ LLM providers, hot-swappable multi-bot, Web admin panel.',
-  hero_btn:'Quick Start',
-};
+# Start the service
+docker compose -f docker-compose.yml up -d
 
-// ==== SVG Icons ====
-const I = {
-  search:'<svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
-  url:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>',
-  weather:'<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>',
-  translate:'<svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5"><path d="M12 22c1 0 2-.5 2-1.5S14 19 12 19s-2 .5-2 1.5S11 22 12 22z"/><path d="M5 8h14M5 12h14M5 16h14"/></svg>',
-  calc:'<svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h5"/></svg>',
-  image:'<svg viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
-  vision:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
-  cli:'<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><polyline points="4 17 10 11 4 5"/><path d="M12 19h8"/></svg>',
-  memo:'<svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
-  grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
-  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5.64 5.64l2.83 2.83M15.54 15.54l2.83 2.83M5.64 18.36l2.83-2.83M15.54 8.46l2.83-2.83"/></svg>',
-  layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
-  monitor:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
-  file:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
-  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1"/></svg>',
-  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-  code:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>',
-  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
-  stack:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>',
-  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
-  slash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M21 21l-2.5-2.5M17 1h6v6M1 23l2.5-2.5M7 23H1v-6"/></svg>',
-};
-// ==== State ====
-let L=(navigator.language||'en').startsWith('zh')?'zh':'en';
-function _(k){ return (T[L]&&T[L][k])||(T.en[k]||k); }
-function toggleLang(){ L=L==='zh'?'en':'zh'; document.documentElement.lang=L==='zh'?'zh-CN':'en'; document.getElementById('langBtn').textContent='EN / 中文'; render(); }
-function card(icon,tK,dK){ return '<div class="feature-card fade-in"><div class="feature-icon">'+icon+'</div><h3>'+_(tK)+'</h3><p>'+_(dK)+'</p></div>'; }
-function pcard(tK,dK,icon,tags){ return '<div class="plugin-card fade-in"><div class="plugin-card-icon" style="background:rgba(99,102,241,.1)">'+icon+'</div><div class="plugin-card-body"><h4>'+_(tK)+'</h4><p>'+_(dK)+'</p>'+tags.map(x=>'<span class="plugin-tag tag-'+(x==='A'?'auto':'manual')+'">'+_('tag_'+(x==='A'?'auto':'manual'))+'</span>').join('')+'</div></div>'; }
-function render(){
-  document.getElementById('featuresGrid').innerHTML=card(I.grid,'f1_t','f1_d')+card(I.sun,'f2_t','f2_d')+card(I.layers,'f3_t','f3_d')+card(I.monitor,'f4_t','f4_d')+card(I.file,'f5_t','f5_d')+card(I.lock,'f6_t','f6_d');
-  document.getElementById('pluginsGrid').innerHTML=pcard('p1_t','p1_d',I.search,['A','M'])+pcard('p2_t','p2_d',I.url,['A'])+pcard('p3_t','p3_d',I.weather,['A','M'])+pcard('p4_t','p4_d',I.translate,['A','M'])+pcard('p5_t','p5_d',I.calc,['A','M'])+pcard('p6_t','p6_d',I.image,['M'])+pcard('p7_t','p7_d',I.vision,['A'])+pcard('p8_t','p8_d',I.cli,['A'])+pcard('p9_t','p9_d',I.memo,['A','M']);
-  document.getElementById('botGrid').innerHTML=card(I.clock,'b1_t','b1_d')+card(I.code,'b2_t','b2_d')+card(I.users,'b3_t','b3_d')+card(I.stack,'b4_t','b4_d');
-  document.getElementById('modelGrid').innerHTML='<div class="feature-card fade-in"><h3 style="margin-bottom:12px">'+_('m1_t')+'</h3><p>'+_('m1_d')+'</p></div><div class="feature-card fade-in"><h3 style="margin-bottom:12px">'+_('m2_t')+'</h3><p>'+_('m2_d')+'</p></div><div class="feature-card fade-in"><h3 style="margin-bottom:12px">'+_('m3_t')+'</h3><p>'+_('m3_d')+'</p></div>';
-  document.getElementById('secGrid').innerHTML=card(I.lock,'s1_t','s1_d')+card(I.shield,'s2_t','s2_d')+card(I.check,'s3_t','s3_d')+card(I.slash,'s4_t','s4_d');
-  document.getElementById('deployTimeline').innerHTML='<div class="timeline-item"><h4>'+_('d1_t')+'</h4><div class="code-block">'+_('d1_d')+'</div></div><div class="timeline-item"><h4>'+_('d2_t')+'</h4><div class="code-block">'+_('d2_d')+'</div></div><div class="timeline-item"><h4>'+_('d3_t')+'</h4><div class="code-block">'+_('d3_d')+'</div></div>';
-  document.getElementById('deployCards').innerHTML='<div class="feature-card fade-in"><h3>'+_('c1_t')+'</h3><p style="font-size:.88rem;color:var(--text2)">'+_('c1_d')+'</p></div><div class="feature-card fade-in"><h3>'+_('c2_t')+'</h3><p style="font-size:.88rem;color:var(--text2)">'+_('c2_d')+'</p></div><div class="feature-card fade-in"><h3>'+_('c3_t')+'</h3><p style="font-size:.88rem;color:var(--text2)">'+_('c3_d')+'</p></div>';
-  document.querySelectorAll('[data-i18n]').forEach(el=>{el.innerHTML=_(el.getAttribute('data-i18n'));});
-  document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
-}
-const observer=new IntersectionObserver((e)=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');});},{threshold:.1});
-render();
+# Access web panel at http://localhost:8000</code></pre>
+          </div>
+        </div>
+        <div class="qs-card">
+          <div class="qs-card-header">
+            <svg width="24" height="24"><use href="#icon-docker"/></svg>
+            <h3 data-i18n="qs_prod_title">Production Deployment</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">Shell</span>
+              <button class="code-copy-btn" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <pre><code># Use pre-built image with health checks
+docker compose -f docker-compose.prod.yml up -d
 
-</script>
+# The image supports both amd64 and arm64</code></pre>
+          </div>
+        </div>
+        <div class="qs-card">
+          <div class="qs-card-header">
+            <svg width="24" height="24"><use href="#icon-code"/></svg>
+            <h3 data-i18n="qs_dev_title">Local Development</h3>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">Shell</span>
+              <button class="code-copy-btn" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <pre><code># Backend
+pip install -r requirements.txt
+python main.py
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run build</code></pre>
+          </div>
+        </div>
+      </div>
+      <div class="qs-after" data-i18n="qs_after">
+        After deployment, visit <code>http://localhost:8000</code> to access the web admin panel. Set your admin password on first login, then add your Telegram Bot Token to get started.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Screenshots / Web Panel Section ===== -->
+  <section class="section section-dark" id="screenshots">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag section-tag-light" data-i18n="ss_tag">Management Panel</span>
+        <h2 class="section-title" data-i18n="ss_title">Intuitive Web Administration</h2>
+        <p class="section-desc" data-i18n="ss_desc">Full control over your bots, models, plugins, and conversations through a clean React dashboard.</p>
+      </div>
+      <div class="ss-grid">
+        <div class="ss-card">
+          <div class="ss-card-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <h4 data-i18n="ss_dashboard">Dashboard</h4>
+          <p data-i18n="ss_dashboard_desc">Message counts, token usage, active users, model overview &amp; connector status</p>
+        </div>
+        <div class="ss-card">
+          <div class="ss-card-icon">
+            <svg width="28" height="28"><use href="#icon-bot"/></svg>
+          </div>
+          <h4 data-i18n="ss_bots">Bot Management</h4>
+          <p data-i18n="ss_bots_desc">Add/edit/delete bots, token validation, personality editor with 5 presets</p>
+        </div>
+        <div class="ss-card">
+          <div class="ss-card-icon">
+            <svg width="28" height="28"><use href="#icon-brain"/></svg>
+          </div>
+          <h4 data-i18n="ss_models">Model Config</h4>
+          <p data-i18n="ss_models_desc">12+ provider presets, model list query, connection test, primary model switch</p>
+        </div>
+        <div class="ss-card">
+          <div class="ss-card-icon">
+            <svg width="28" height="28"><use href="#icon-plugin"/></svg>
+          </div>
+          <h4 data-i18n="ss_plugins">Plugin Toggles</h4>
+          <p data-i18n="ss_plugins_desc">Enable/disable any of the 9 plugins with a single click</p>
+        </div>
+        <div class="ss-card">
+          <div class="ss-card-icon">
+            <svg width="28" height="28"><use href="#icon-shield"/></svg>
+          </div>
+          <h4 data-i18n="ss_blacklist">Blacklist Control</h4>
+          <p data-i18n="ss_blacklist_desc">Add/remove users from blacklist to block unwanted interactions</p>
+        </div>
+        <div class="ss-card">
+          <div class="ss-card-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <h4 data-i18n="ss_diagnostics">Diagnostics</h4>
+          <p data-i18n="ss_diagnostics_desc">Bot connection status, polling checks, and troubleshooting guide</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ Section ===== -->
+  <section class="section" id="faq">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="faq_tag">Questions</span>
+        <h2 class="section-title" data-i18n="faq_title">Frequently Asked Questions</h2>
+      </div>
+      <div class="faq-list">
+        <!-- Q1 -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span data-i18n="faq_q1">What LLM providers are supported?</span>
+            <svg class="faq-chevron" width="20" height="20"><use href="#icon-arrow-down"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a1">The system supports 12+ providers: OpenAI, DeepSeek, Anthropic Claude, Google Gemini, Alibaba Qwen (Tongyi Qianwen), Moonshot, Zhipu AI (GLM), StepFun, MiniMax, Baidu Wenxin (ERNIE), ByteDance Doubao, and Ollama for local models. Each Bot can be configured with a primary and a backup model with automatic fallback.</p>
+          </div>
+        </div>
+        <!-- Q2 -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span data-i18n="faq_q2">Can I run multiple Telegram bots with one deployment?</span>
+            <svg class="faq-chevron" width="20" height="20"><use href="#icon-arrow-down"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a2">Yes. The system supports unlimited Bot instances running simultaneously. Each Bot has its own personality, model configuration, group chat settings, and plugin preferences. You can add, remove, start, or stop bots at any time through the web panel without restarting the service.</p>
+          </div>
+        </div>
+        <!-- Q3 -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span data-i18n="faq_q3">How does the plugin/Function Calling system work?</span>
+            <svg class="faq-chevron" width="20" height="20"><use href="#icon-arrow-down"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a3">Each plugin exposes a tool definition in OpenAI Function Calling format. When a user sends a message, the tool definitions are sent alongside the conversation. The LLM decides whether to call a tool. The system executes the tool and feeds the result back to the LLM for a final response. Users can also trigger plugins manually with commands like /search, /weather, /calc, /translate, and /draw.</p>
+          </div>
+        </div>
+        <!-- Q4 -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span data-i18n="faq_q4">How is conversation memory handled?</span>
+            <svg class="faq-chevron" width="20" height="20"><use href="#icon-arrow-down"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a4">Conversation history is stored in SQLite with isolation per bot_id + chat_id. When a conversation exceeds 30 messages, the system automatically triggers an LLM-based summarization, compressing older messages while retaining the last 8 messages and a summary of prior context. This balances context preservation with token efficiency.</p>
+          </div>
+        </div>
+        <!-- Q5 -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span data-i18n="faq_q5">What security measures are in place?</span>
+            <svg class="faq-chevron" width="20" height="20"><use href="#icon-arrow-down"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a5">The system implements multiple layers of security: JWT-based authentication with 24-hour token expiry, bcrypt password hashing, a 12-character recovery code for password reset, blacklist for blocking users, per-user rate limiting, whitelist mode option, CLI sandbox with 256MB memory limit and dangerous-command blacklist, and automatic log redaction of API keys and tokens.</p>
+          </div>
+        </div>
+        <!-- Q6 -->
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span data-i18n="faq_q6">How do I extend the system with new plugins?</span>
+            <svg class="faq-chevron" width="20" height="20"><use href="#icon-arrow-down"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq_a6">Creating a new plugin is straightforward: inherit from the PluginBase class, implement the execute() method and get_tool_definition() method, then register it in the plugin registry. The system handles the rest &mdash; your plugin will automatically appear in the Function Calling tool list and can be enabled/disabled from the web panel.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="#home" class="footer-logo" aria-label="Home">
+          <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
+            <rect width="100" height="100" rx="20" fill="url(#logo-grad-2)"/>
+            <text x="50" y="66" font-size="44" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-weight="700">TG</text>
+            <defs>
+              <linearGradient id="logo-grad-2" x1="0" y1="0" x2="100" y2="100">
+                <stop offset="0%" stop-color="#2563EB"/>
+                <stop offset="100%" stop-color="#7C3AED"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span>TG AI Chat Bot</span>
+        </a>
+        <p data-i18n="footer_desc">A lightweight, production-ready Telegram multi-bot AI chat system. Open source under the MIT license.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4 data-i18n="footer_resources">Resources</h4>
+          <a href="https://github.com/yinheng1998/tg_chat_bot" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/yinheng1998/tg_chat_bot/blob/main/README.md" target="_blank" rel="noopener" data-i18n="footer_readme">README</a>
+          <a href="https://github.com/yinheng1998/tg_chat_bot/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer_license">License</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer_deploy">Deployment</h4>
+          <a href="#quickstart" data-i18n="footer_docker">Docker</a>
+          <a href="#quickstart" data-i18n="footer_prod">Production</a>
+          <a href="#quickstart" data-i18n="footer_dev">Development</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-bottom-inner">
+        <p><span data-i18n="footer_built">Built with</span> <span class="footer-heart"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span> <span data-i18n="footer_by">by</span> YinHeng &middot; MIT License</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== Back to Top ===== -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg width="20" height="20"><use href="#icon-arrow-right"/></svg>
+  </button>
+
+  <script src="scripts.js"></script>
 </body>
 </html>
