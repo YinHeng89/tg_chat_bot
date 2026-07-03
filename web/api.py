@@ -458,6 +458,43 @@ async def update_model(model_id: int, req: dict, user=Depends(get_current_user))
     return {"success": True}
 
 
+async def _test_model_availability(provider: str, api_key: str, base_url: str, model_name: str) -> bool:
+    """检测模型是否可用：发一个轻量请求。"""
+    try:
+        from core.llm import _create_backend
+        config = {"provider": provider, "api_key": api_key, "base_url": base_url.rstrip("/"),
+                  "model_name": model_name, "name": "Detect"}
+        backend = _create_backend(config)
+        await backend.chat([{"role": "user", "content": "hi"}], max_tokens=1)
+        return True
+    except Exception as e:
+        err = str(e)[:200]
+        logger.warning(f"模型 {model_name} 可用性检测失败: {err}")
+        if "location" in err.lower() or "FAILED_PRECONDITION" in err:
+            logger.info(f"模型 {model_name} 可能是区域限制，不影响使用列表")
+        return False
+
+
+@app.post("/api/models/{model_id}/recheck")
+async def recheck_model(model_id: int, user=Depends(get_current_user)):
+    """重新检测模型可用性，更新 capabilities.available 并返回结果。"""
+    m = await get_model_config(model_id)
+    if not m:
+        raise HTTPException(status_code=404, detail="模型不存在")
+    if not m["api_key"] or not m["base_url"]:
+        raise HTTPException(status_code=400, detail="请先配置 API Key 和 Base URL")
+    try:
+        caps = json.loads(m.get("capabilities") or "{}") if m.get("capabilities") else {}
+    except Exception:
+        caps = {}
+    caps["available"] = await _test_model_availability(
+        m["provider"], m["api_key"], m.get("base_url", ""), m["model_name"]
+    )
+    await update_model_config(model_id, capabilities=json.dumps(caps))
+    await llm_manager.reload()
+    return {"success": True, "available": caps["available"], "capabilities": caps}
+
+
 @app.post("/api/models")
 async def add_model(req: dict, user=Depends(get_current_user)):
     model_id = await add_model_config(req.get("name", "New Model"), req.get("provider", "openai"))
@@ -479,22 +516,8 @@ async def add_model(req: dict, user=Depends(get_current_user)):
     provider = req.get("provider", "")
     if model_name:
         caps = {"vision": False, "available": False}
-        # 检测可用性：有 Key + 地址时发一个轻量请求
         if api_key and base_url:
-            try:
-                from core.llm import _create_backend
-                config = {"provider": provider, "api_key": api_key, "base_url": base_url,
-                          "model_name": model_name, "name": "Detect"}
-                backend = _create_backend(config)
-                await backend.chat([{"role": "user", "content": "hi"}], max_tokens=1)
-                caps["available"] = True
-            except Exception as e:
-                caps["available"] = False
-                err = str(e)[:200]
-                logger.warning(f"模型 {model_name} 可用性检测失败: {err}")
-                # Gemini 常见：区域不支持，不算致命错误
-                if "location" in err.lower() or "FAILED_PRECONDITION" in err:
-                    logger.info(f"模型 {model_name} 可能是区域限制，不影响使用列表")
+            caps["available"] = await _test_model_availability(provider, api_key, base_url, model_name)
         try:
             await update_model_config(model_id, capabilities=json.dumps(caps))
         except Exception:

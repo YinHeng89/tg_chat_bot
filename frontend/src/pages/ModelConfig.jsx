@@ -347,11 +347,36 @@ export default function ModelConfig() {
                         >视觉</span>
                       )
                     })()}
-                    {m.capabilities?.available != null && (
-                      m.capabilities.available
-                        ? <span className="badge badge-success" style={{ marginLeft: 4, fontSize: 10, padding: '1px 5px' }}>可用</span>
-                        : <span className="badge" style={{ marginLeft: 4, fontSize: 10, padding: '1px 5px', background: 'var(--danger-light)', color: 'var(--danger)' }}>不可用</span>
-                    )}
+                    {m.capabilities?.available != null && (() => {
+                      const isAvailable = m.capabilities.available === true
+                      const isTesting = m.capabilities.available === 'testing'
+                      const handleRecheck = async () => {
+                        const mid = m.id
+                        setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: { ...x.capabilities, available: 'testing' } } : x))
+                        await new Promise(r => setTimeout(r, 100))  // 让"检测中..."先渲染
+                        try {
+                          const res = await apiPost(`/models/${mid}/recheck`)
+                          setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: res.capabilities } : x))
+                          setToast({ type: res.available ? 'success' : 'error', text: res.available ? '模型可用' : '仍不可用' })
+                        } catch (err) {
+                          setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: { ...x.capabilities, available: false } } : x))
+                          setToast({ type: 'error', text: err.message })
+                        }
+                        setTimeout(() => setToast(null), 3000)
+                      }
+                      return (
+                        <span
+                          className="badge"
+                          onClick={handleRecheck}
+                          style={{
+                            marginLeft: 4, fontSize: 10, padding: '1px 5px', cursor: 'pointer',
+                            background: isTesting ? 'var(--warning-light)' : (isAvailable ? 'var(--success-light)' : 'var(--danger-light)'),
+                            color: isTesting ? 'var(--warning)' : (isAvailable ? 'var(--success)' : 'var(--danger)'),
+                          }}
+                          title={isTesting ? '检测中...' : (isAvailable ? '可用，点击重新检测' : '不可用，点击重新检测')}
+                        >{isTesting ? '检测中...' : (isAvailable ? '可用' : '不可用')}</span>
+                      )
+                    })()}
                   </td>
                   <td style={{ fontSize: 12 }}>{m.has_api_key ? m.api_key : <span style={{ color: 'var(--danger)' }}>未配置</span>}</td>
                   <td>

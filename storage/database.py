@@ -4,7 +4,7 @@ import json
 import aiosqlite
 from typing import Optional
 
-from storage.models import CREATE_TABLES_SQL, Message, ModelConfig
+from storage.models import CREATE_TABLES_SQL, Message
 from utils.logger import logger
 
 DB_PATH = "data/bot.db"
@@ -24,7 +24,7 @@ async def get_db() -> aiosqlite.Connection:
 
 
 async def migrate_database():
-    """兼容旧库：添加新字段。"""
+    """兼容旧库：添加新字段 + 重命名旧插件。"""
     db = await aiosqlite.connect(DB_PATH)
     try:
         await db.execute("ALTER TABLE model_configs ADD COLUMN capabilities TEXT DEFAULT '{}'")
@@ -32,6 +32,17 @@ async def migrate_database():
         logger.info("数据库迁移: model_configs 已添加 capabilities 列")
     except Exception:
         pass  # 列已存在
+    try:
+        # code_runner 已废弃，删除旧记录让 cli 接管
+        await db.execute("DELETE FROM plugin_configs WHERE name = 'code_runner'")
+        await db.execute(
+            "INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES ('cli', 1)"
+        )
+        await db.commit()
+        if db.total_changes > 0:
+            logger.info("数据库迁移: code_runner → cli")
+    except Exception:
+        pass
     finally:
         await db.close()
 
@@ -155,6 +166,24 @@ async def record_usage(chat_id: str, user_id: int, model: str, tokens: int):
         await db.close()
 
 
+async def cleanup_old_stats(retain_days: int = 30):
+    """清理超过 retain_days 天的统计记录，防止 stats 表无限增长。"""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "DELETE FROM stats WHERE created_at < datetime('now', ? || ' days')",
+            (f"-{retain_days}",)
+        )
+        await db.commit()
+        deleted = cursor.rowcount
+        if deleted > 0:
+            logger.info(f"清理了 {deleted} 条过期统计记录（超过 {retain_days} 天）")
+    except Exception as e:
+        logger.warning(f"清理 stats 失败: {e}")
+    finally:
+        await db.close()
+
+
 async def get_stats(days: int = 7) -> dict:
     db = await get_db()
     try:
@@ -243,7 +272,8 @@ async def set_setting(key: str, value) -> bool:
     db = await get_db()
     try:
         await db.execute(
-            "INSERT OR REPLACE INTO bot_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+            "INSERT INTO bot_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP",
             (key, value)
         )
         await db.commit()

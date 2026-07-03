@@ -1,7 +1,6 @@
 """数据模型定义 — SQLite 表结构和数据类。"""
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 # ===== 数据库表结构 SQL =====
 
@@ -156,14 +155,4 @@ class Conversation:
         return result
 
 
-@dataclass
-class ModelConfig:
-    """单个模型配置。"""
-    id: int = 0
-    name: str = ""
-    provider: str = "openai"
-    api_key: str = ""
-    base_url: str = ""
-    model_name: str = ""
-    is_enabled: bool = False
-    sort_order: int = 0
+

@@ -20,6 +20,9 @@ async def init_system():
     check_wcwidth()
     await core_config.refresh()
     await llm_manager.init()
+    # 清理过期统计数据（保留最近 30 天）
+    from storage.database import cleanup_old_stats
+    await cleanup_old_stats()
     # 优先从 plugin_configs 表读取（唯一数据源），兼容旧 enabled_plugins 设置
     plugins = await get_plugin_configs()
     if plugins:
