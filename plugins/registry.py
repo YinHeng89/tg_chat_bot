@@ -10,8 +10,8 @@ from plugins.calculator import CalculatorPlugin
 from plugins.translate import TranslatePlugin
 from plugins.image_understand import ImageUnderstandPlugin
 from plugins.image_gen import ImageGenPlugin
-from plugins.code_runner import CodeRunnerPlugin
 from plugins.memos import MemosPlugin
+from plugins.cli import CLIPlugin
 from utils.logger import logger
 
 
@@ -33,7 +33,7 @@ class PluginRegistry:
             TranslatePlugin(),
             ImageUnderstandPlugin(),
             ImageGenPlugin(),
-            CodeRunnerPlugin(),
+            CLIPlugin(),
             MemosPlugin(),
         ]
         for plugin in builtins:

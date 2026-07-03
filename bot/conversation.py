@@ -82,7 +82,7 @@ async def handle_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
         tools = plugin_registry.get_tool_definitions()
         if tools:
             async def tool_handler(name, args):
-                # 将所有参数传给插件（code_runner 需要 code/language，web_search 需要 query 等）
+                # 将所有参数传给插件（cli 需要 command，web_search 需要 query 等）
                 return await plugin_registry.execute(name, args, {"user_id": user_id, "chat_id": chat_id})
             result = await llm_manager.chat_with_tools(messages, tools, tool_handler, max_tokens=2000, allowed_model_ids=allowed_models)
         else:

@@ -56,7 +56,7 @@ tg_chat_bot/
 │   ├── translate.py            # 翻译
 │   ├── image_understand.py     # 图片理解
 │   ├── image_gen.py            # 图片生成
-│   ├── code_runner.py          # 代码沙箱执行
+│   ├── cli.py                  # 容器 Shell 命令执行
 │   └── memos.py                # Memos 备忘录
 │
 ├── storage/                    # 存储层
@@ -171,7 +171,7 @@ MEMOS_API_KEY=你的memos API Key
 | `translate` | ✅ | `/translate` | 多语言翻译 |
 | `image_understand` | ✅ | - | 多模态图片分析 |
 | `image_gen` | ✅ | `/draw` | AI 文生图 |
-| `code_runner` | ✅ | - | 代码沙箱执行 |
+| `cli` | ✅ | - | 容器 Shell 命令执行 |
 | `memos` | ✅ | `/memos` | Memos 备忘录读写 |
 
 ---

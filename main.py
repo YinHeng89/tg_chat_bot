@@ -26,7 +26,7 @@ async def init_system():
         enabled = [p["name"] for p in plugins if p["enabled"]]
     else:
         # 首次启动/旧库迁移：默认全部启用
-        enabled = await get_setting_list("enabled_plugins", ["web_search", "url_summary", "weather", "calculator", "translate", "image_understand", "code_runner", "image_gen"])
+        enabled = await get_setting_list("enabled_plugins", ["web_search", "url_summary", "weather", "calculator", "translate", "image_understand", "cli", "image_gen"])
     plugin_registry.set_enabled(enabled)
     logger.info(f"系统就绪 — 主模型: {llm_manager.primary}, 插件: {enabled}")
 

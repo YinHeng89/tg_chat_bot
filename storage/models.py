@@ -102,7 +102,7 @@ INSERT OR IGNORE INTO bot_settings (key, value) VALUES
     ('max_history', '20'),
     ('rate_limit', '10'),
     ('whitelist_mode', 'false'),
-    ('enabled_plugins', '["web_search","url_summary","weather","calculator","translate","image_understand","code_runner","memos"]'),
+    ('enabled_plugins', '["web_search","url_summary","weather","calculator","translate","image_understand","cli","memos"]'),
     ('search_engine', 'duckduckgo'),
     ('admin_ids', '[]');
 
@@ -118,7 +118,7 @@ INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES
     ('translate', 1),
     ('image_understand', 1),
     ('image_gen', 0),
-    ('code_runner', 1),
+    ('cli', 1),
     ('memos', 1);
 
 CREATE INDEX IF NOT EXISTS idx_conversations_bot_chat ON conversations(bot_id, chat_id);
