@@ -23,7 +23,7 @@ COPY . .
 # 复制前端构建产物
 COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
-# 创建数据和日志目录
+# 创建运行时目录
 RUN mkdir -p data logs workspace
 
 EXPOSE 8000

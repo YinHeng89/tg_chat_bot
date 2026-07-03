@@ -50,7 +50,6 @@ class CoreConfig:
         return await self.get("bot_name", "AI 助手")
 
     @property
-    @property
     async def group_reply_mode(self) -> str:
         return await self.get("group_reply_mode", "mentioned")
 

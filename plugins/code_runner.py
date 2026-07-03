@@ -1,9 +1,9 @@
 """代码执行连接器 — 沙箱执行 Python/Shell 代码，仅允许操作 workspace/ 目录。"""
 
 import os
+import resource
 import subprocess
 import tempfile
-import shutil
 from typing import Optional
 
 from plugins.base import BasePlugin
@@ -12,6 +12,15 @@ from utils.logger import logger
 WORKSPACE = "/app/workspace"
 MAX_OUTPUT = 8000
 TIMEOUT = 30  # 秒
+MAX_MEMORY_MB = 256  # 进程最大内存 (MB)
+
+
+def _set_limits():
+    """子进程资源限制：CPU 时间 + 内存上限。"""
+    cpu_seconds = TIMEOUT + 5
+    resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
+    mem_bytes = MAX_MEMORY_MB * 1024 * 1024
+    resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
 
 
 class CodeRunnerPlugin(BasePlugin):
@@ -63,6 +72,21 @@ class CodeRunnerPlugin(BasePlugin):
             }
         }
 
+    @staticmethod
+    def _sanitize_filename(filename: str) -> str:
+        """净化文件名：防止路径遍历攻击。"""
+        if not filename:
+            return ""
+        # 提取纯文件名，去除目录分隔符
+        safe = os.path.basename(filename)
+        # 拒绝含 ".." 的恶意输入
+        if ".." in filename or "/" in filename or "\\" in filename:
+            logger.warning(f"拒绝可疑文件名: {filename!r}，使用净化名: {safe!r}")
+        # 限制长度防止异常
+        if len(safe) > 128:
+            safe = safe[:128]
+        return safe
+
     async def execute(self, params: dict, context: Optional[dict] = None) -> str:
         language = params.get("language", "python")
         code = params.get("code", "")
@@ -76,6 +100,9 @@ class CodeRunnerPlugin(BasePlugin):
         # 写入临时文件执行
         suffix = ".py" if language == "python" else ".sh"
         if filename:
+            filename = self._sanitize_filename(filename)
+            if not filename:
+                return "文件名无效"
             filepath = os.path.join(WORKSPACE, filename)
         else:
             fd, filepath = tempfile.mkstemp(suffix=suffix, dir=WORKSPACE)
@@ -101,6 +128,7 @@ class CodeRunnerPlugin(BasePlugin):
                 capture_output=True,
                 text=True,
                 timeout=TIMEOUT,
+                preexec_fn=_set_limits,
             )
 
             output = (result.stdout or "") + (result.stderr or "")

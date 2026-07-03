@@ -20,7 +20,10 @@ from storage.database import (
     get_enabled_models,
     get_bots, create_bot, update_bot, delete_bot, get_bot,
 )
-from web.auth import verify_password, create_access_token, verify_token, update_admin_password
+from web.auth import (
+    verify_password, create_access_token, verify_token, update_admin_password,
+    get_setup_status, setup_password, reset_password,
+)
 from utils.logger import logger
 
 app = FastAPI(title="TG AI Chat Bot - 管理面板 API", version="2.0.0")
@@ -36,8 +39,26 @@ app.add_middleware(
 
 # ===== 模型 =====
 
-class LoginRequest(BaseModel):
-    password: str
+# ===== 健康检查 =====
+
+@app.get("/healthz")
+async def healthz():
+    """存活检查：进程是否运行。"""
+    return {"status": "ok"}
+
+
+@app.get("/readyz")
+async def readyz():
+    """就绪检查：数据库是否可访问。"""
+    try:
+        from storage.database import get_db
+        db = await get_db()
+        await db.execute("SELECT 1")
+        await db.close()
+        return {"status": "ready", "database": "ok"}
+    except Exception as e:
+        return {"status": "not_ready", "error": str(e)}
+
 
 class SettingUpdate(BaseModel):
     key: str
@@ -138,9 +159,58 @@ async def query_models(req: dict, user=Depends(get_current_user)):
         return {"models": [], "error": str(e)}
 
 
+@app.get("/api/auth/status")
+async def auth_status():
+    """检查是否需要首次设置密码。"""
+    return await get_setup_status()
+
+
+@app.post("/api/auth/setup")
+async def auth_setup(req: dict):
+    """首次设置：创建密码，返回恢复码（仅显示一次，请妥善保存）。"""
+    password = req.get("password", "")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="密码至少 6 位")
+
+    # 检查是否已经设置过
+    status = await get_setup_status()
+    if not status["need_setup"]:
+        raise HTTPException(status_code=400, detail="已经设置过密码")
+
+    try:
+        result = await setup_password(password)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/auth/reset-password")
+async def auth_reset_password(req: dict):
+    """通过恢复码重置密码，返回新恢复码（旧恢复码立即失效）。"""
+    recovery_code = req.get("recovery_code", "").strip().upper()
+    new_password = req.get("new_password", "")
+
+    if not recovery_code or not new_password:
+        raise HTTPException(status_code=400, detail="请提供恢复码和新密码")
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="新密码至少 6 位")
+
+    try:
+        result = await reset_password(recovery_code, new_password)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @app.post("/api/auth/login")
-async def login(req: LoginRequest):
-    if not await verify_password(req.password):
+async def login(req: dict):
+    """登录：需要密码。如果未设置密码则提示首次设置。"""
+    status = await get_setup_status()
+    if status["need_setup"]:
+        raise HTTPException(status_code=400, detail="请先设置管理密码（SETUP_REQUIRED）")
+
+    password = req.get("password", "")
+    if not await verify_password(password):
         raise HTTPException(status_code=401, detail="密码错误")
     token = create_access_token({"role": "admin"})
     return {"access_token": token, "token_type": "bearer"}
@@ -154,8 +224,8 @@ async def change_password(req: dict, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="请提供新旧密码")
     if not await verify_password(old_pwd):
         raise HTTPException(status_code=400, detail="旧密码错误")
-    if len(new_pwd) < 4:
-        raise HTTPException(status_code=400, detail="新密码至少 4 位")
+    if len(new_pwd) < 6:
+        raise HTTPException(status_code=400, detail="新密码至少 6 位")
     await update_admin_password(new_pwd)
     return {"success": True}
 

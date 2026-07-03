@@ -7,7 +7,6 @@ services:
       - "8025:8000"
     environment:
       - WEB_JWT_SECRET=${WEB_JWT_SECRET}
-      - WEB_ADMIN_PASSWORD=${WEB_ADMIN_PASSWORD}
       - MEMOS_API_URL=${MEMOS_API_URL}
       - MEMOS_API_KEY=${MEMOS_API_KEY}
       - TZ=Asia/Shanghai
