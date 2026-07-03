@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     content TEXT NOT NULL,
     model TEXT DEFAULT '',
     tokens INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 会话摘要（bot_id + chat_id 隔离）
@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     model TEXT DEFAULT '',
     message_count INTEGER DEFAULT 0,
     total_tokens INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT datetime('now', 'localtime'),
-    updated_at TIMESTAMP DEFAULT datetime('now', 'localtime'),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (bot_id, chat_id)
 );
 
@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS bots (
     name TEXT NOT NULL DEFAULT '',
     bot_token TEXT NOT NULL DEFAULT '',
     is_active INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT datetime('now', 'localtime'),
-    updated_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 使用统计
@@ -48,14 +48,14 @@ CREATE TABLE IF NOT EXISTS stats (
     user_id INTEGER NOT NULL,
     model TEXT DEFAULT '',
     tokens INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 黑名单
 CREATE TABLE IF NOT EXISTS blacklist (
     user_id INTEGER PRIMARY KEY,
     reason TEXT DEFAULT '',
-    added_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 模型配置（主模型 + 备用模型）
@@ -69,15 +69,15 @@ CREATE TABLE IF NOT EXISTS model_configs (
     is_enabled INTEGER DEFAULT 1,
     sort_order INTEGER DEFAULT 0,
     capabilities TEXT DEFAULT '{}',
-    created_at TIMESTAMP DEFAULT datetime('now', 'localtime'),
-    updated_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 全局设置（Key-Value）
 CREATE TABLE IF NOT EXISTS bot_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL,
-    updated_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 插件设置
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS plugin_configs (
     name TEXT PRIMARY KEY,
     enabled INTEGER DEFAULT 0,
     config TEXT DEFAULT '{}',
-    updated_at TIMESTAMP DEFAULT datetime('now', 'localtime')
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 默认设置（贴心伙伴角色的全局默认值，新 Bot 自动继承）
