@@ -318,89 +318,91 @@ export default function ModelConfig() {
         {sortedModels.length === 0 ? (
           <div className="empty-state"><IconCpu /><p>暂无模型，请添加</p></div>
         ) : (
-          <table className="table">
-            <thead><tr><th>顺序</th><th>名称</th><th>供应商</th><th>模型</th><th>Key</th><th>状态</th><th>操作</th></tr></thead>
-            <tbody>
-              {sortedModels.map((m) => (
-                <tr key={m.id}
-                  style={m.is_primary ? { background: 'var(--primary-light)' } : {}}
-                  onMouseEnter={() => setHoveredRowId(m.id)}
-                  onMouseLeave={() => setHoveredRowId(null)}>
-                  <td>{m.is_primary ? <span className="badge badge-success">主</span> : <span className="badge badge-default">备用</span>}</td>
-                  <td><strong>{m.name || '-'}</strong></td>
-                  <td>{ALL_PROVIDERS.find(p => p.value === m.provider)?.label || m.provider}</td>
-                  <td>
-                    {m.model_name || '-'}
-                    {(() => {
-                      const vision = !!(m.capabilities?.vision)
-                      return (
-                        <span
-                          onClick={() => toggleVision(m)}
-                          style={{
-                            marginLeft: 4, fontSize: 10, padding: '1px 6px', cursor: 'pointer',
-                            background: vision ? 'var(--success-light)' : 'var(--bg-tertiary)',
-                            color: vision ? 'var(--success)' : 'var(--text-muted)',
-                            borderRadius: 10, border: '1px solid currentColor',
-                            userSelect: 'none', display: 'inline-block', lineHeight: '14px',
-                          }}
-                          title={vision ? '点击禁用视觉能力' : '点击启用视觉能力'}
-                        >视觉</span>
-                      )
-                    })()}
-                    {m.capabilities?.available != null && (() => {
-                      const isAvailable = m.capabilities.available === true
-                      const isTesting = m.capabilities.available === 'testing'
-                      const handleRecheck = async () => {
-                        const mid = m.id
-                        setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: { ...x.capabilities, available: 'testing' } } : x))
-                        await new Promise(r => setTimeout(r, 100))  // 让"检测中..."先渲染
-                        try {
-                          const res = await apiPost(`/models/${mid}/recheck`)
-                          setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: res.capabilities } : x))
-                          setToast({ type: res.available ? 'success' : 'error', text: res.available ? '模型可用' : '仍不可用' })
-                        } catch (err) {
-                          setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: { ...x.capabilities, available: false } } : x))
-                          setToast({ type: 'error', text: err.message })
+          <div className="table-responsive">
+            <table className="table">
+              <thead><tr><th>顺序</th><th>名称</th><th>供应商</th><th>模型</th><th>Key</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody>
+                {sortedModels.map((m) => (
+                  <tr key={m.id}
+                    style={m.is_primary ? { background: 'var(--primary-light)' } : {}}
+                    onMouseEnter={() => setHoveredRowId(m.id)}
+                    onMouseLeave={() => setHoveredRowId(null)}>
+                    <td>{m.is_primary ? <span className="badge badge-success">主</span> : <span className="badge badge-default">备用</span>}</td>
+                    <td><strong>{m.name || '-'}</strong></td>
+                    <td>{ALL_PROVIDERS.find(p => p.value === m.provider)?.label || m.provider}</td>
+                    <td>
+                      {m.model_name || '-'}
+                      {(() => {
+                        const vision = !!(m.capabilities?.vision)
+                        return (
+                          <span
+                            onClick={() => toggleVision(m)}
+                            style={{
+                              marginLeft: 4, fontSize: 10, padding: '1px 6px', cursor: 'pointer',
+                              background: vision ? 'var(--success-light)' : 'var(--bg-tertiary)',
+                              color: vision ? 'var(--success)' : 'var(--text-muted)',
+                              borderRadius: 10, border: '1px solid currentColor',
+                              userSelect: 'none', display: 'inline-block', lineHeight: '14px',
+                            }}
+                            title={vision ? '点击禁用视觉能力' : '点击启用视觉能力'}
+                          >视觉</span>
+                        )
+                      })()}
+                      {m.capabilities?.available != null && (() => {
+                        const isAvailable = m.capabilities.available === true
+                        const isTesting = m.capabilities.available === 'testing'
+                        const handleRecheck = async () => {
+                          const mid = m.id
+                          setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: { ...x.capabilities, available: 'testing' } } : x))
+                          await new Promise(r => setTimeout(r, 100))
+                          try {
+                            const res = await apiPost(`/models/${mid}/recheck`)
+                            setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: res.capabilities } : x))
+                            setToast({ type: res.available ? 'success' : 'error', text: res.available ? '模型可用' : '仍不可用' })
+                          } catch (err) {
+                            setModels(prev => prev.map(x => x.id === mid ? { ...x, capabilities: { ...x.capabilities, available: false } } : x))
+                            setToast({ type: 'error', text: err.message })
+                          }
+                          setTimeout(() => setToast(null), 3000)
                         }
-                        setTimeout(() => setToast(null), 3000)
-                      }
-                      return (
-                        <span
-                          className="badge"
-                          onClick={handleRecheck}
-                          style={{
-                            marginLeft: 4, fontSize: 10, padding: '1px 5px', cursor: 'pointer',
-                            background: isTesting ? 'var(--warning-light)' : (isAvailable ? 'var(--success-light)' : 'var(--danger-light)'),
-                            color: isTesting ? 'var(--warning)' : (isAvailable ? 'var(--success)' : 'var(--danger)'),
-                          }}
-                          title={isTesting ? '检测中...' : (isAvailable ? '可用，点击重新检测' : '不可用，点击重新检测')}
-                        >{isTesting ? '检测中...' : (isAvailable ? '可用' : '不可用')}</span>
-                      )
-                    })()}
-                  </td>
-                  <td style={{ fontSize: 12 }}>{m.has_api_key ? m.api_key : <span style={{ color: 'var(--danger)' }}>未配置</span>}</td>
-                  <td>
-                    <label className="toggle toggle-sm" style={{ verticalAlign: 'middle' }}>
-                      <input type="checkbox" checked={m.is_enabled} onChange={() => handleToggle(m)} />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-outline btn-sm" onClick={() => openEdit(m)}><IconSave /> 编辑</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleDelete(m.id)}><IconTrash /> 删除</button>
-                      {!m.is_primary && (
-                        <button className="btn btn-outline btn-sm" onClick={() => setPrimary(m.id)}
-                          style={{ opacity: hoveredRowId === m.id ? 1 : 0, transition: 'opacity .15s' }}>
-                          <IconZap /> 设为主模型
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        return (
+                          <span
+                            className="badge"
+                            onClick={handleRecheck}
+                            style={{
+                              marginLeft: 4, fontSize: 10, padding: '1px 5px', cursor: 'pointer',
+                              background: isTesting ? 'var(--warning-light)' : (isAvailable ? 'var(--success-light)' : 'var(--danger-light)'),
+                              color: isTesting ? 'var(--warning)' : (isAvailable ? 'var(--success)' : 'var(--danger)'),
+                            }}
+                            title={isTesting ? '检测中...' : (isAvailable ? '可用，点击重新检测' : '不可用，点击重新检测')}
+                          >{isTesting ? '检测中...' : (isAvailable ? '可用' : '不可用')}</span>
+                        )
+                      })()}
+                    </td>
+                    <td style={{ fontSize: 12 }}>{m.has_api_key ? m.api_key : <span style={{ color: 'var(--danger)' }}>未配置</span>}</td>
+                    <td>
+                      <label className="toggle toggle-sm" style={{ verticalAlign: 'middle' }}>
+                        <input type="checkbox" checked={m.is_enabled} onChange={() => handleToggle(m)} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </td>
+                    <td>
+                      <div className="action-btns" style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-outline btn-sm" onClick={() => openEdit(m)}><IconSave /> 编辑</button>
+                        <button className="btn btn-outline btn-sm" onClick={() => handleDelete(m.id)}><IconTrash /> 删除</button>
+                        {!m.is_primary && (
+                          <button className="btn btn-outline btn-sm" onClick={() => setPrimary(m.id)}
+                            style={{ opacity: hoveredRowId === m.id ? 1 : 0, transition: 'opacity .15s' }}>
+                            <IconZap /> 主模型
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

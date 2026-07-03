@@ -54,31 +54,33 @@ export default function Sessions() {
         {sessions.length === 0 ? (
           <div className="empty-state"><IconMessage /><p>暂无活跃会话</p></div>
         ) : (
-          <table className="table">
-            <thead><tr><th>会话 ID</th><th>用户 ID</th><th>消息数</th><th>Token</th><th>最近模型</th><th>最后活跃</th><th>操作</th></tr></thead>
-            <tbody>
-              {sessions.map(s => (
-                <tr key={s.chat_id}>
-                  <td><code>{s.chat_id}</code></td>
-                  <td>{s.user_id}</td>
-                  <td>{s.message_count || 0}</td>
-                  <td>{(s.total_tokens || 0).toLocaleString()}</td>
-                  <td><span className="badge badge-default">{s.model || '-'}</span></td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{s.updated_at || '-'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleBan(s.user_id, s.chat_id)}>
-                        <IconShield /> 拉黑
-                      </button>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleDelete(s.chat_id)}>
-                        <IconTrash /> 清空
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-responsive">
+            <table className="table">
+              <thead><tr><th>会话 ID</th><th>用户 ID</th><th>消息数</th><th>Token</th><th>最近模型</th><th>最后活跃</th><th>操作</th></tr></thead>
+              <tbody>
+                {sessions.map(s => (
+                  <tr key={s.chat_id}>
+                    <td><code>{s.chat_id}</code></td>
+                    <td>{s.user_id}</td>
+                    <td>{s.message_count || 0}</td>
+                    <td>{(s.total_tokens || 0).toLocaleString()}</td>
+                    <td><span className="badge badge-default">{s.model || '-'}</span></td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{s.updated_at || '-'}</td>
+                    <td>
+                      <div className="action-btns" style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-outline btn-sm" onClick={() => handleBan(s.user_id, s.chat_id)}>
+                          <IconShield /> 拉黑
+                        </button>
+                        <button className="btn btn-outline btn-sm" onClick={() => handleDelete(s.chat_id)}>
+                          <IconTrash /> 清空
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

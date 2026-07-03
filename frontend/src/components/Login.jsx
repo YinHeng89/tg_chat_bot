@@ -89,8 +89,8 @@ export default function Login({ onLogin }) {
     label: { display: 'block', marginBottom: 4, fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 },
     input: {
       width: '100%', padding: '10px 12px', borderRadius: 8,
-      border: '1px solid var(--border-color)', background: 'var(--bg-secondary)',
-      color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+      border: '1px solid var(--border)', background: 'var(--bg)',
+      color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box',
     },
     btn: {
       width: '100%', padding: '12px', borderRadius: 8, border: 'none',
@@ -132,7 +132,7 @@ export default function Login({ onLogin }) {
             margin: '20px auto', padding: '16px 24px', fontSize: 24,
             fontFamily: 'monospace', fontWeight: 700, letterSpacing: 2,
             background: 'var(--bg-tertiary)', borderRadius: 12,
-            color: 'var(--primary)', border: '2px dashed var(--border-color)',
+            color: 'var(--primary)', border: '2px dashed var(--border)',
             userSelect: 'all', wordBreak: 'break-all',
           }}>
             {displayRecoveryCode}

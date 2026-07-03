@@ -45,32 +45,36 @@ export default function Dashboard() {
         <div className="card">
           <div className="card-header"><IconZap /> 模型概览</div>
           {models.length === 0 ? <div className="empty-state">暂无配置</div> : (
-            <table className="table">
-              <thead><tr><th>供应商</th><th>模型</th><th>状态</th></tr></thead>
-              <tbody>
-                {models.map((m, i) => (
-                  <tr key={i}>
-                    <td><span className="badge badge-default">{m.provider}</span></td>
-                    <td>{m.model_name || '-'}</td>
-                    <td><span className={`badge ${m.is_enabled ? 'badge-success' : 'badge-default'}`}>
-                      {m.is_enabled ? '启用' : '未启用'}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="table-responsive">
+              <table className="table">
+                <thead><tr><th>供应商</th><th>模型</th><th>状态</th></tr></thead>
+                <tbody>
+                  {models.map((m, i) => (
+                    <tr key={i}>
+                      <td><span className="badge badge-default">{m.provider}</span></td>
+                      <td>{m.model_name || '-'}</td>
+                      <td><span className={`badge ${m.is_enabled ? 'badge-success' : 'badge-default'}`}>
+                        {m.is_enabled ? '启用' : '未启用'}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
         <div className="card">
           <div className="card-header"><IconActivity /> 按模型统计 (7天)</div>
           {(!s.by_model || s.by_model.length === 0) ? <div className="empty-state">暂无数据</div> : (
-            <table className="table">
-              <thead><tr><th>模型</th><th>调用次数</th><th>Token</th></tr></thead>
-              <tbody>
-                {s.by_model.map((m, i) => (
-                  <tr key={i}><td>{m.model || '?'}</td><td>{m.count}</td><td>{m.tokens.toLocaleString()}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="table-responsive">
+              <table className="table">
+                <thead><tr><th>模型</th><th>调用次数</th><th>Token</th></tr></thead>
+                <tbody>
+                  {s.by_model.map((m, i) => (
+                    <tr key={i}><td>{m.model || '?'}</td><td>{m.count}</td><td>{m.tokens.toLocaleString()}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

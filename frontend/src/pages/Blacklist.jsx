@@ -68,23 +68,25 @@ export default function Blacklist() {
         {blacklist.length === 0 ? (
           <div className="empty-state"><IconShield /><p>黑名单为空</p></div>
         ) : (
-          <table className="table">
-            <thead><tr><th>用户 ID</th><th>原因</th><th>添加时间</th><th>操作</th></tr></thead>
-            <tbody>
-              {blacklist.map(item => (
-                <tr key={item.user_id}>
-                  <td><code>{item.user_id}</code></td>
-                  <td>{item.reason || '-'}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{item.added_at || '-'}</td>
-                  <td>
-                    <button className="btn btn-outline btn-sm" onClick={() => handleRemove(item.user_id)}>
-                      <IconTrash /> 移除
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-responsive">
+            <table className="table">
+              <thead><tr><th>用户 ID</th><th>原因</th><th>添加时间</th><th>操作</th></tr></thead>
+              <tbody>
+                {blacklist.map(item => (
+                  <tr key={item.user_id}>
+                    <td><code>{item.user_id}</code></td>
+                    <td>{item.reason || '-'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{item.added_at || '-'}</td>
+                    <td>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleRemove(item.user_id)}>
+                        <IconTrash /> 移除
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

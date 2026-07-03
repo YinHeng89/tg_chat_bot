@@ -332,7 +332,7 @@ export default function Bots() {
       <Modal open={personaModal} onClose={() => setPersonaModal(false)}
         title={`${bots.find(b => b.id === personaBotId)?.name || `Bot #${personaBotId}`} 性格设置`} width="750px">
         {/* 角色选择 */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="role-tabs" style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           {ROLES.map(r => (
             <button key={r.key}
               onClick={() => handlePreset(r.key)}
@@ -499,33 +499,35 @@ export default function Bots() {
         {bots.length === 0 ? (
           <div className="empty-state"><IconBot /><p>暂无 Bot，请添加</p></div>
         ) : (
-          <table className="table">
-            <thead><tr><th>ID</th><th>名称</th><th>Token</th><th>状态</th><th>操作</th></tr></thead>
-            <tbody>
-              {bots.map(b => (
-                <tr key={b.id}>
-                  <td>{b.id}</td>
-                  <td>{b.name || '-'}</td>
-                  <td><code>{b.bot_token ? b.bot_token.slice(0, 16) + '...' : '-'}</code></td>
-                  <td>
-                    <label className="toggle toggle-sm" style={{ verticalAlign: 'middle' }}>
-                      <input type="checkbox" checked={!!b.is_active} onChange={() => toggleBot(b)} />
-                      <span className="toggle-slider"></span>
-                    </label>
-                    <span style={{ marginLeft: 6, fontSize: 12, color: b.is_active ? 'var(--success)' : 'var(--text-muted)' }}>{b.is_active ? '启用' : '禁用'}</span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      <button className="btn btn-outline btn-sm" onClick={() => openPersona(b)}><IconSparkles /> 性格设置</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => openSettings(b)}><IconSettings /> 聊天设置</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => openEdit(b)}><IconSave /> 编辑</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => delBot(b.id)}><IconTrash /> 删除</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-responsive">
+            <table className="table">
+              <thead><tr><th>ID</th><th>名称</th><th>Token</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody>
+                {bots.map(b => (
+                  <tr key={b.id}>
+                    <td>{b.id}</td>
+                    <td>{b.name || '-'}</td>
+                    <td><code>{b.bot_token ? b.bot_token.slice(0, 16) + '...' : '-'}</code></td>
+                    <td>
+                      <label className="toggle toggle-sm" style={{ verticalAlign: 'middle' }}>
+                        <input type="checkbox" checked={!!b.is_active} onChange={() => toggleBot(b)} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                      <span style={{ marginLeft: 6, fontSize: 12, color: b.is_active ? 'var(--success)' : 'var(--text-muted)' }}>{b.is_active ? '启用' : '禁用'}</span>
+                    </td>
+                    <td>
+                      <div className="action-btns" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        <button className="btn btn-outline btn-sm" onClick={() => openPersona(b)}><IconSparkles /> 性格</button>
+                        <button className="btn btn-outline btn-sm" onClick={() => openSettings(b)}><IconSettings /> 设置</button>
+                        <button className="btn btn-outline btn-sm" onClick={() => openEdit(b)}><IconSave /> 编辑</button>
+                        <button className="btn btn-outline btn-sm" onClick={() => delBot(b.id)}><IconTrash /> 删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
