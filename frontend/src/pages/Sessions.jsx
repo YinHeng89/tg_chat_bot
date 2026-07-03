@@ -55,7 +55,7 @@ export default function Sessions() {
           <div className="empty-state"><IconMessage /><p>暂无活跃会话</p></div>
         ) : (
           <table className="table">
-            <thead><tr><th>会话 ID</th><th>用户 ID</th><th>消息数</th><th>Token</th><th>模型</th><th>最后活跃</th><th>操作</th></tr></thead>
+            <thead><tr><th>会话 ID</th><th>用户 ID</th><th>消息数</th><th>Token</th><th>最近模型</th><th>最后活跃</th><th>操作</th></tr></thead>
             <tbody>
               {sessions.map(s => (
                 <tr key={s.chat_id}>

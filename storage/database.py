@@ -80,11 +80,13 @@ async def add_message(bot_id: int, chat_id: str, user_id: int, role: str, conten
         await db.commit()
         await db.execute("""
             INSERT INTO sessions (bot_id, chat_id, user_id, model, message_count, total_tokens, updated_at)
-            VALUES (?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, 1, ?, datetime('now', 'localtime'))
             ON CONFLICT(bot_id, chat_id) DO UPDATE SET
+                user_id = excluded.user_id,
+                model = excluded.model,
                 message_count = message_count + 1,
                 total_tokens = total_tokens + ?,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = datetime('now', 'localtime')
         """, (bot_id, chat_id, user_id, model, tokens, tokens))
         await db.commit()
     finally:
@@ -225,7 +227,7 @@ async def add_blacklist(user_id: int, reason: str = ""):
     db = await get_db()
     try:
         await db.execute(
-            "INSERT OR REPLACE INTO blacklist (user_id, reason, added_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+            "INSERT OR REPLACE INTO blacklist (user_id, reason, added_at) VALUES (?, ?, datetime('now', 'localtime'))",
             (user_id, reason)
         )
         await db.commit()
@@ -272,8 +274,8 @@ async def set_setting(key: str, value) -> bool:
     db = await get_db()
     try:
         await db.execute(
-            "INSERT INTO bot_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) "
-            "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP",
+            "INSERT INTO bot_settings (key, value, updated_at) VALUES (?, ?, datetime('now', 'localtime')) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now', 'localtime')",
             (key, value)
         )
         await db.commit()
@@ -365,7 +367,7 @@ async def update_bot(bot_id: int, **kwargs) -> bool:
         for k, v in updates.items():
             fields.append(f"{k} = ?")
             vals.append(1 if k == "is_active" and v else (0 if k == "is_active" and not v else v))
-        fields.append("updated_at = CURRENT_TIMESTAMP")
+        fields.append("updated_at = datetime('now', 'localtime')")
         await db.execute(
             f"UPDATE bots SET {', '.join(fields)} WHERE id = ?",
             vals + [bot_id]
@@ -436,7 +438,7 @@ async def update_model_config(model_id: int, **kwargs) -> bool:
         for k, v in updates.items():
             fields.append(f"{k} = ?")
             vals.append(1 if k == "is_enabled" and v else (0 if k == "is_enabled" and not v else v))
-        fields.append("updated_at = CURRENT_TIMESTAMP")
+        fields.append("updated_at = datetime('now', 'localtime')")
         await db.execute(
             f"UPDATE model_configs SET {', '.join(fields)} WHERE id = ?",
             vals + [model_id]
@@ -510,7 +512,7 @@ async def set_plugin_enabled(name: str, enabled: bool) -> bool:
             (name, 0)
         )
         await db.execute(
-            "UPDATE plugin_configs SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?",
+            "UPDATE plugin_configs SET enabled = ?, updated_at = datetime('now', 'localtime') WHERE name = ?",
             (1 if enabled else 0, name)
         )
         await db.commit()

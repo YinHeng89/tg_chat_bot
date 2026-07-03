@@ -90,7 +90,7 @@ async def handle_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         reply = result.text or "抱歉，我没能生成有效的回复。"
         model_name = result.model or "unknown"
-        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, max_history=max_history)
+        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, tokens=result.total_tokens, max_history=max_history)
         await record_usage(chat_id, user_id, model_name, result.total_tokens)
 
         # 自动压缩：超过 30 条消息时，LLM 自动摘要旧消息
@@ -218,7 +218,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text_pfx = f"[{sender_name}]: " if chat.type in ("group", "supergroup") else ""
         await memory_manager.add_user_message(bot_id, chat_id, user_id, f"{text_pfx}[图片] {caption}", max_history)
         model_name = result.model or "unknown"
-        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, max_history=max_history)
+        await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, tokens=result.total_tokens, max_history=max_history)
         await record_usage(chat_id, user_id, model_name, result.total_tokens)
 
         reply = truncate_text(reply, 4000)
