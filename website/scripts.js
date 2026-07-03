@@ -422,6 +422,7 @@
   // ================================================================
   function init() {
     _captureOriginalText();
+    setLanguage('zh');  // 默认中文，必须在 _captureOriginalText() 之后
     handleNavScroll();
     handleBackToTop();
     setupAnimations();
