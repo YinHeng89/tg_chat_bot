@@ -89,6 +89,19 @@ CREATE TABLE IF NOT EXISTS plugin_configs (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 定时任务 / 待办提醒（bot_id + chat_id 隔离）
+CREATE TABLE IF NOT EXISTS scheduled_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bot_id INTEGER DEFAULT 0,
+    chat_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    title TEXT DEFAULT '',
+    fire_at TEXT NOT NULL,
+    repeat_rule TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 默认设置（贴心伙伴角色的全局默认值，新 Bot 自动继承）
 INSERT OR IGNORE INTO bot_settings (key, value) VALUES
     ('bot_name', 'AI 助手'),
@@ -120,12 +133,15 @@ INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES
     ('image_gen', 0),
     ('cli', 1),
     ('memos', 1),
-    ('relay', 1);
+    ('relay', 1),
+    ('reminder', 1);
 
 CREATE INDEX IF NOT EXISTS idx_conversations_bot_chat ON conversations(bot_id, chat_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
 CREATE INDEX IF NOT EXISTS idx_stats_user_id ON stats(user_id);
 CREATE INDEX IF NOT EXISTS idx_stats_created_at ON stats(created_at);
+CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_bot_chat ON scheduled_tasks(bot_id, chat_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_status ON scheduled_tasks(status);
 """
 
 

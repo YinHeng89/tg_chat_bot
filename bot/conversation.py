@@ -2,7 +2,6 @@
 
 import base64
 import json
-from datetime import datetime
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
@@ -13,7 +12,7 @@ from plugins.registry import plugin_registry
 from storage.database import record_usage, get_db, compress_conversation, should_compress, get_model_configs, is_blacklisted
 from bot.context import build_context, format_context
 from bot.settings import get_bot_structured, get_bot_setting_int, build_agent_prompt, get_bot_allowed_models
-from utils.helpers import extract_urls, truncate_text, md_to_html
+from utils.helpers import extract_urls, truncate_text, md_to_html, get_now, get_timezone
 from utils.logger import logger
 
 
@@ -63,8 +62,8 @@ async def handle_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
             if ctx_text:
                 system_prompt = f"{system_prompt}\n\n{ctx_text}"
                 # 把时间直接塞到用户消息前面（LLM 不会质疑对话里的时间）
-                now = datetime.now()
-                tz_name = now.astimezone().tzname() or ""
+                now = get_now()
+                tz_name = get_timezone().key if hasattr(get_timezone(), 'key') else "Asia/Shanghai"
                 text = f"[系统: 现在是{now.strftime('%Y年%m月%d日 %A %H:%M')}({tz_name})]\n{text}"
 
         # 群聊：每条消息前加上发送者名字，让 LLM 能区分谁说了什么

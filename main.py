@@ -7,6 +7,7 @@ import uvicorn
 from core.config import core_config
 from core.llm import llm_manager
 from core.bot_manager import bot_manager, set_main_loop
+from core.scheduler import start_scheduler
 from plugins.registry import plugin_registry
 from storage.database import get_setting_list, migrate_database, get_plugin_configs
 from utils.logger import logger
@@ -47,6 +48,9 @@ async def main():
     server = uvicorn.Server(config)
     loop = asyncio.get_event_loop()
     set_main_loop(loop)
+
+    # 启动调度器（定时提醒 + 心跳）
+    asyncio.create_task(start_scheduler(tick_seconds=30))
 
     logger.info("Web 管理面板: http://0.0.0.0:8000")
     await server.serve()

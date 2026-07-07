@@ -9,6 +9,7 @@ import Connectors from './pages/Connectors'
 import Blacklist from './pages/Blacklist'
 import Sessions from './pages/Sessions'
 import Diagnostics from './pages/Diagnostics'
+import Tasks from './pages/Tasks'
 
 // ===== 主题 Context =====
 export const ThemeContext = createContext()
@@ -82,6 +83,7 @@ function App() {
             <Route path="/blacklist" element={<Blacklist />} />
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/diagnostics" element={<Diagnostics />} />
+            <Route path="/tasks" element={<Tasks />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>

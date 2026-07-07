@@ -4,7 +4,7 @@ import { apiPost } from '../api'
 import { useTheme } from '../App'
 import {
   IconDashboard, IconBot, IconCpu, IconPlug,
-  IconShield, IconMessage,
+  IconShield, IconMessage, IconClock,
   IconActivity, IconLogout,
 } from '../icons'
 
@@ -22,6 +22,7 @@ const navItems = [
   { to: '/blacklist', icon: IconShield, label: '黑名单', sub: '管理被禁止使用机器人的用户' },
   { to: '/sessions', icon: IconMessage, label: '会话管理', sub: '查看和清理活跃的对话会话' },
   { to: '/diagnostics', icon: IconActivity, label: '连接诊断', sub: 'Telegram 连接状态检测' },
+  { to: '/tasks', icon: IconClock, label: '定时任务', sub: '管理待办提醒和定时通知' },
 ]
 
 export default function Layout({ children, onLogout }) {

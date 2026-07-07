@@ -19,6 +19,7 @@ from storage.database import (
     get_plugin_configs, set_plugin_enabled,
     get_enabled_models,
     get_bots, create_bot, update_bot, delete_bot, get_bot,
+    list_tasks, delete_task,
 )
 from web.auth import (
     verify_password, create_access_token, verify_token, update_admin_password,
@@ -725,6 +726,50 @@ async def diagnostics(user=Depends(get_current_user)):
         result["bots"].append(info)
 
     return result
+
+
+# ===== 定时任务管理 =====
+
+class TaskCreate(BaseModel):
+    title: str
+    fire_at: str  # ISO 格式
+    bot_id: int = 0
+    chat_id: str = ""
+    user_id: int = 0
+    repeat_rule: str = ""
+
+
+@app.get("/api/tasks")
+async def get_tasks(bot_id: int = 0, chat_id: str = "", user=Depends(get_current_user)):
+    """获取定时任务列表。"""
+    tasks = await list_tasks(bot_id=bot_id, chat_id=chat_id)
+    return {"tasks": tasks}
+
+
+@app.post("/api/tasks")
+async def create_task(req: TaskCreate, user=Depends(get_current_user)):
+    """手动创建定时任务。"""
+    from storage.database import add_task
+    task_id = await add_task(
+        bot_id=req.bot_id,
+        chat_id=req.chat_id,
+        user_id=req.user_id,
+        title=req.title,
+        fire_at=req.fire_at,
+        repeat_rule=req.repeat_rule,
+    )
+    if not task_id:
+        raise HTTPException(status_code=500, detail="创建任务失败")
+    return {"success": True, "id": task_id}
+
+
+@app.delete("/api/tasks/{task_id}")
+async def remove_task(task_id: int, user=Depends(get_current_user)):
+    """删除定时任务。"""
+    ok = await delete_task(task_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    return {"success": True}
 
 
 # ===== 统计 =====

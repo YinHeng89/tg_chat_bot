@@ -48,9 +48,13 @@ async def migrate_database():
         await db.execute(
             "INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES ('relay', 1)"
         )
+        # reminder 新增插件（默认启用）
+        await db.execute(
+            "INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES ('reminder', 1)"
+        )
         await db.commit()
         if db.total_changes > 0:
-            logger.info("数据库迁移: code_runner → cli, 新增 relay")
+            logger.info("数据库迁移: code_runner → cli, 新增 relay + reminder")
     except Exception:
         pass
     finally:
@@ -531,6 +535,153 @@ async def set_plugin_enabled(name: str, enabled: bool) -> bool:
         return True
     except Exception as e:
         logger.error(f"更新插件状态失败 {name}: {e}")
+        return False
+    finally:
+        await db.close()
+
+
+# ===== 定时任务 / 待办提醒 =====
+
+async def add_task(bot_id: int, chat_id: str, user_id: int, title: str,
+                   fire_at: str, repeat_rule: str = "") -> Optional[int]:
+    """新增一个定时任务。fire_at 为 ISO 格式的本地时间字符串。"""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "INSERT INTO scheduled_tasks (bot_id, chat_id, user_id, title, fire_at, repeat_rule, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, 'pending')",
+            (bot_id, chat_id, user_id, title, fire_at, repeat_rule)
+        )
+        await db.commit()
+        task_id = cursor.lastrowid
+        logger.info(f"新增定时任务 #{task_id}: [{chat_id}] {title} → {fire_at}")
+        return task_id
+    except Exception as e:
+        logger.error(f"新增定时任务失败: {e}")
+        return None
+    finally:
+        await db.close()
+
+
+async def get_due_tasks(now_str: str = "") -> list[dict]:
+    """获取所有到期的待处理任务（fire_at <= 指定时间，且状态为 pending）。"""
+    if not now_str:
+        from utils.helpers import get_now_str
+        now_str = get_now_str()
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM scheduled_tasks "
+            "WHERE status = 'pending' AND fire_at <= ? "
+            "ORDER BY fire_at ASC",
+            (now_str,)
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def get_catchup_tasks(grace_minutes: int = 5, now_str: str = "") -> list[dict]:
+    """获取错过但在宽限期内的任务（用于服务重启后补发）。"""
+    if not now_str:
+        from utils.helpers import get_now_str, get_now
+        from datetime import timedelta
+        now = get_now()
+        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    from datetime import datetime, timedelta
+    now_dt = datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S")
+    grace_start = (now_dt - timedelta(minutes=grace_minutes)).strftime("%Y-%m-%d %H:%M:%S")
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "SELECT * FROM scheduled_tasks "
+            "WHERE status = 'pending' "
+            "AND fire_at <= ? "
+            "AND fire_at >= ? "
+            "ORDER BY fire_at ASC",
+            (now_str, grace_start)
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def mark_task_done(task_id: int):
+    """标记任务已完成。"""
+    db = await get_db()
+    try:
+        await db.execute(
+            "UPDATE scheduled_tasks SET status = 'done' WHERE id = ?",
+            (task_id,)
+        )
+        await db.commit()
+    except Exception as e:
+        logger.error(f"标记任务 #{task_id} 完成失败: {e}")
+    finally:
+        await db.close()
+
+
+async def mark_task_skipped(task_id: int):
+    """标记任务已跳过（错过太久）。"""
+    db = await get_db()
+    try:
+        await db.execute(
+            "UPDATE scheduled_tasks SET status = 'skipped' WHERE id = ?",
+            (task_id,)
+        )
+        await db.commit()
+    except Exception as e:
+        logger.error(f"标记任务 #{task_id} 跳过失败: {e}")
+    finally:
+        await db.close()
+
+
+async def reschedule_task(task_id: int, next_fire_at: str):
+    """为重复任务重新安排下次触发时间。"""
+    db = await get_db()
+    try:
+        await db.execute(
+            "UPDATE scheduled_tasks SET fire_at = ?, status = 'pending' WHERE id = ?",
+            (next_fire_at, task_id)
+        )
+        await db.commit()
+    except Exception as e:
+        logger.error(f"重新安排任务 #{task_id} 失败: {e}")
+    finally:
+        await db.close()
+
+
+async def list_tasks(bot_id: int = 0, chat_id: str = "") -> list[dict]:
+    """列出任务（可按 bot_id / chat_id 筛选）。"""
+    db = await get_db()
+    try:
+        query = "SELECT * FROM scheduled_tasks WHERE 1=1"
+        params = []
+        if bot_id > 0:
+            query += " AND bot_id = ?"
+            params.append(bot_id)
+        if chat_id:
+            query += " AND chat_id = ?"
+            params.append(chat_id)
+        query += " ORDER BY fire_at DESC"
+        cursor = await db.execute(query, params)
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        await db.close()
+
+
+async def delete_task(task_id: int) -> bool:
+    """删除一个任务。"""
+    db = await get_db()
+    try:
+        cursor = await db.execute("DELETE FROM scheduled_tasks WHERE id = ?", (task_id,))
+        await db.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        logger.error(f"删除任务 #{task_id} 失败: {e}")
         return False
     finally:
         await db.close()

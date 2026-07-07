@@ -1,7 +1,10 @@
 """通用工具函数。"""
 
 import re
+import os
 import hashlib
+from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Optional
 
 
@@ -211,6 +214,37 @@ def supports_vision(model_name: str) -> bool:
         return False  # 普通豆包不支持
     # 未知模型：保守返回 False
     return False
+
+
+# ===== 时区 =====
+
+_timezone: ZoneInfo | None = None
+_timezone_name: str = ""
+
+
+def get_timezone() -> ZoneInfo:
+    """获取配置的时区（默认 Asia/Shanghai），缓存结果。"""
+    global _timezone, _timezone_name
+    tz_name = os.environ.get("TZ", "") or "Asia/Shanghai"
+    if _timezone is None or tz_name != _timezone_name:
+        try:
+            _timezone = ZoneInfo(tz_name)
+            _timezone_name = tz_name
+        except (ZoneInfoNotFoundError, KeyError):
+            _timezone = ZoneInfo("Asia/Shanghai")
+            _timezone_name = "Asia/Shanghai"
+    return _timezone
+
+
+def get_now() -> datetime:
+    """获取配置时区的当前时间（naive datetime，用于与 DB 中的本地时间比较）。"""
+    tz = get_timezone()
+    return datetime.now(tz).replace(tzinfo=None)
+
+
+def get_now_str(fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+    """获取配置时区当前时间的格式化字符串。"""
+    return get_now().strftime(fmt)
 
 
 def check_wcwidth():

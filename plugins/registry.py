@@ -13,6 +13,7 @@ from plugins.image_gen import ImageGenPlugin
 from plugins.memos import MemosPlugin
 from plugins.cli import CLIPlugin
 from plugins.relay import RelayPlugin
+from plugins.reminder import ReminderPlugin
 from utils.logger import logger
 
 
@@ -37,6 +38,7 @@ class PluginRegistry:
             CLIPlugin(),
             MemosPlugin(),
             RelayPlugin(),
+            ReminderPlugin(),
         ]
         for plugin in builtins:
             self._plugins[plugin.name] = plugin
