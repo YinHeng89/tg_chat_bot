@@ -21,9 +21,11 @@ async def start_scheduler(tick_seconds: int = 30):
     # 启动时补发宽限期内的过期任务
     await _catchup_missed_tasks()
 
-    # 首次心跳
+    # 首次心跳（记录时间防止 _heartbeat_tick 重复发送）
     if await get_setting_bool("heartbeat_enabled", False):
         await _send_heartbeat()
+        global _heartbeat_last
+        _heartbeat_last = get_now().strftime("%Y-%m-%d %H:%M")
 
     while True:
         try:
@@ -237,7 +239,7 @@ async def _send_heartbeat():
                 "device_key": bark_key.strip(),
                 "title": title,
                 "body": body,
-                "group": "TG Bot",
+                "group": "TG_CHAT_BOT",
             })
             if resp.status_code == 200:
                 logger.info("心跳已推送到 Bark")
