@@ -9,7 +9,7 @@ from core.llm import llm_manager
 from core.bot_manager import bot_manager, set_main_loop
 from core.scheduler import start_scheduler
 from plugins.registry import plugin_registry
-from storage.database import get_setting_list, migrate_database, get_plugin_configs
+from storage.database import get_setting_list, migrate_database, get_plugin_configs, set_plugin_enabled
 from utils.logger import logger
 from utils.helpers import check_wcwidth
 from web.auth import _init_secret_key
@@ -31,6 +31,10 @@ async def init_system():
     else:
         # 首次启动/旧库迁移：默认全部启用
         enabled = await get_setting_list("enabled_plugins", ["web_search", "url_summary", "weather", "calculator", "translate", "image_understand", "cli", "image_gen"])
+    # 确保 reminder 一定启用（DB 迁移不及时也能生效）
+    if "reminder" not in enabled:
+        await set_plugin_enabled("reminder", True)
+        enabled.append("reminder")
     plugin_registry.set_enabled(enabled)
     logger.info(f"系统就绪 — 主模型: {llm_manager.primary}, 插件: {enabled}")
 

@@ -19,9 +19,9 @@ class ReminderPlugin(BasePlugin):
     @property
     def description(self) -> str:
         return (
-            "【必须调用】当用户要求在未来某个时间点提醒他某件事时，创建定时提醒任务。"
-            "触发词包括但不限于：「提醒」「闹钟」「待办」「记一下」「别忘了」「稍后提醒」"
-            "「X分钟后」「明天X点」「下周X」「定时」等。"
+            "为用户创建定时提醒。用户说「X分钟后/明天X点/下周X提醒我XXX」时，"
+            "你必须调用此工具，算出 delay_minutes 或 fire_at，不要只口头答应。"
+            "即使用户没说具体时间，也请你推断一个合理时间（如「等会儿」=5分钟，「明天」=明天9点）。"
         )
 
     @property
@@ -43,22 +43,22 @@ class ReminderPlugin(BasePlugin):
                     "properties": {
                         "title": {
                             "type": "string",
-                            "description": "提醒的标题/内容，简洁明了地概括要提醒什么"
+                            "description": "提醒内容。如用户说「提醒我吃药」，title='吃药'"
                         },
                         "delay_minutes": {
                             "type": "number",
-                            "description": "多少分钟后提醒。如用户说「30分钟后提醒我」，此值为30。仅当用户给出了相对时间时填写"
+                            "description": "多少分钟后提醒，必须为正数。如30分钟后→30，1小时后→60，等会儿→5。优先使用此参数"
                         },
                         "fire_at": {
                             "type": "string",
-                            "description": "绝对提醒时间，ISO 格式（YYYY-MM-DD HH:MM:SS）。如用户说「明天下午3点提醒我开会」则转换为具体时间。仅当用户给出绝对时间时填写"
+                            "description": "绝对提醒时间（YYYY-MM-DD HH:MM:SS）。仅当用户明确说了具体时间点（如「明天下午3点」）时才用此参数。需根据当前时间计算具体日期"
                         },
                         "repeat": {
                             "type": "string",
-                            "description": "重复规则。'daily'=每天 / 'weekly'=每周 / 'hourly'=每小时 / 不填=单次"
+                            "description": "重复规则：'daily'/'weekly'/'hourly'。不填=单次"
                         }
                     },
-                    "required": ["title"]
+                    "required": ["title", "delay_minutes"]
                 }
             }
         }

@@ -40,7 +40,7 @@ async def get_bot_structured(bot_token: str) -> dict:
 
 
 def build_agent_prompt(structured: dict) -> str:
-    """从结构化字段构建 Agent Prompt（SOUL + IDENTITY + USER + 自定义）。"""
+    """从结构化字段构建 Agent Prompt（SOUL + IDENTITY + USER + 能力 + 自定义）。"""
     parts = []
     soul = structured.get("soul", [])
     identity = structured.get("identity", "")
@@ -61,6 +61,13 @@ def build_agent_prompt(structured: dict) -> str:
 
     if user_context:
         parts.append(f"关于用户: {user_context}")
+
+    # 能力提示：让 LLM 主动利用提醒功能
+    parts.append(
+        "你可以帮用户创建定时提醒。"
+        "当用户说「提醒我…」「X分钟后提醒…」「设个闹钟」「帮我记一下」等，"
+        "请务必调用 reminder 工具来创建提醒，不要只口头回复。"
+    )
 
     if custom:
         parts.append(custom)
