@@ -9,12 +9,15 @@ class MemoryManager:
     async def get_history(self, bot_id: int, chat_id: str) -> list[Message]:
         return await get_conversation(bot_id, chat_id)
 
-    async def add_user_message(self, bot_id: int, chat_id: str, user_id: int, content: str, max_history: int = 20):
-        await add_message(bot_id, chat_id, user_id, "user", content, max_history=max_history)
+    async def add_user_message(self, bot_id: int, chat_id: str, user_id: int, content: str,
+                               max_history: int = 20, chat_title: str = ""):
+        await add_message(bot_id, chat_id, user_id, "user", content,
+                          max_history=max_history, chat_title=chat_title)
 
     async def add_assistant_message(self, bot_id: int, chat_id: str, user_id: int, content: str,
                                      model: str = "", tokens: int = 0, max_history: int = 20):
-        await add_message(bot_id, chat_id, user_id, "assistant", content, model=model, tokens=tokens, max_history=max_history)
+        await add_message(bot_id, chat_id, user_id, "assistant", content,
+                          model=model, tokens=tokens, max_history=max_history)
 
     async def clear(self, bot_id: int, chat_id: str):
         await clear_conversation(bot_id, chat_id)

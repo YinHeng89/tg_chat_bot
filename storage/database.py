@@ -33,14 +33,24 @@ async def migrate_database():
     except Exception:
         pass  # 列已存在
     try:
+        await db.execute("ALTER TABLE sessions ADD COLUMN chat_title TEXT DEFAULT ''")
+        await db.commit()
+        logger.info("数据库迁移: sessions 已添加 chat_title 列")
+    except Exception:
+        pass  # 列已存在
+    try:
         # code_runner 已废弃，删除旧记录让 cli 接管
         await db.execute("DELETE FROM plugin_configs WHERE name = 'code_runner'")
         await db.execute(
             "INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES ('cli', 1)"
         )
+        # relay 新增插件（默认启用）
+        await db.execute(
+            "INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES ('relay', 1)"
+        )
         await db.commit()
         if db.total_changes > 0:
-            logger.info("数据库迁移: code_runner → cli")
+            logger.info("数据库迁移: code_runner → cli, 新增 relay")
     except Exception:
         pass
     finally:
@@ -63,7 +73,8 @@ async def get_conversation(bot_id: int, chat_id: str) -> list[Message]:
 
 
 async def add_message(bot_id: int, chat_id: str, user_id: int, role: str, content: str,
-                      model: str = "", tokens: int = 0, max_history: int = 20):
+                      model: str = "", tokens: int = 0, max_history: int = 20,
+                      chat_title: str = ""):
     db = await get_db()
     try:
         await db.execute(
@@ -79,15 +90,16 @@ async def add_message(bot_id: int, chat_id: str, user_id: int, role: str, conten
         """, (bot_id, chat_id, bot_id, chat_id, max_history * 2))
         await db.commit()
         await db.execute("""
-            INSERT INTO sessions (bot_id, chat_id, user_id, model, message_count, total_tokens, updated_at)
-            VALUES (?, ?, ?, ?, 1, ?, datetime('now', 'localtime'))
+            INSERT INTO sessions (bot_id, chat_id, user_id, chat_title, model, message_count, total_tokens, updated_at)
+            VALUES (?, ?, ?, ?, ?, 1, ?, datetime('now', 'localtime'))
             ON CONFLICT(bot_id, chat_id) DO UPDATE SET
                 user_id = excluded.user_id,
+                chat_title = CASE WHEN excluded.chat_title != '' THEN excluded.chat_title ELSE chat_title END,
                 model = excluded.model,
                 message_count = message_count + 1,
                 total_tokens = total_tokens + ?,
                 updated_at = datetime('now', 'localtime')
-        """, (bot_id, chat_id, user_id, model, tokens, tokens))
+        """, (bot_id, chat_id, user_id, chat_title, model, tokens, tokens))
         await db.commit()
     finally:
         await db.close()

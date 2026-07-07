@@ -11,6 +11,7 @@ from plugins.registry import plugin_registry
 from storage.database import (
     get_stats,
     get_session_info, add_blacklist, remove_blacklist, get_blacklist,
+    is_blacklisted,
 )
 from utils.helpers import parse_command_args
 from utils.logger import logger
@@ -24,6 +25,11 @@ async def handle_bot_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user = update.effective_user
     chat = update.effective_chat
     chat_id = str(chat.id)
+
+    # 黑名单拦截
+    if await is_blacklisted(user.id):
+        logger.info(f"黑名单用户 {user.id} 使用命令 /{command}，已忽略")
+        return
 
     # 确保核心配置已加载
     admin_ids = await core_config.get("admin_ids", [])

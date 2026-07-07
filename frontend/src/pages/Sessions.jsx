@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiGet, apiPost, apiDelete } from '../api'
-import { IconMessage, IconTrash, IconRefresh, IconShield } from '../icons'
+import { IconMessage, IconTrash, IconRefresh, IconShield, IconUser, IconUsers } from '../icons'
 import Modal from '../components/Modal'
 
 export default function Sessions() {
@@ -56,10 +56,24 @@ export default function Sessions() {
         ) : (
           <div className="table-responsive">
             <table className="table">
-              <thead><tr><th>会话 ID</th><th>用户 ID</th><th>消息数</th><th>Token</th><th>最近模型</th><th>最后活跃</th><th>操作</th></tr></thead>
+              <thead><tr><th>名称</th><th>会话 ID</th><th>用户 ID</th><th>消息数</th><th>Token</th><th>最近模型</th><th>最后活跃</th><th>操作</th></tr></thead>
               <tbody>
-                {sessions.map(s => (
+                {sessions.map(s => {
+                  const isGroup = String(s.chat_id).startsWith('-')
+                  const name = s.chat_title || (isGroup ? `群 ${s.chat_id}` : `用户 ${s.user_id}`)
+                  return (
                   <tr key={s.chat_id}>
+                    <td>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, maxWidth: 160 }}
+                        title={name}>
+                        <span style={{ flexShrink: 0, color: isGroup ? 'var(--warning)' : 'var(--text-muted)', display: 'flex', width: 14, height: 14 }}>
+                          {isGroup ? <IconUsers /> : <IconUser />}
+                        </span>
+                        <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {name}
+                        </span>
+                      </span>
+                    </td>
                     <td><code>{s.chat_id}</code></td>
                     <td>{s.user_id}</td>
                     <td>{s.message_count || 0}</td>
@@ -77,7 +91,8 @@ export default function Sessions() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes
 from core.llm import llm_manager
 from core.memory import memory_manager
 from plugins.registry import plugin_registry
-from storage.database import record_usage, get_db, compress_conversation, should_compress, get_model_configs
+from storage.database import record_usage, get_db, compress_conversation, should_compress, get_model_configs, is_blacklisted
 from bot.context import build_context, format_context
 from bot.settings import get_bot_structured, get_bot_setting_int, build_agent_prompt, get_bot_allowed_models
 from utils.helpers import extract_urls, truncate_text, md_to_html
@@ -75,15 +75,32 @@ async def handle_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
                            or sender.username or str(user_id))
             text = f"[{sender_name}]: {text}"
 
-        await memory_manager.add_user_message(bot_id, chat_id, user_id, text, max_history)
+        # 构造会话标题（群聊=群名，私聊=用户名）
+        chat_title = ""
+        if chat_obj:
+            if chat_obj.type in ("group", "supergroup", "channel"):
+                chat_title = chat_obj.title or ""
+            else:
+                user_obj = update.effective_user
+                chat_title = (f"{user_obj.first_name or ''} {user_obj.last_name or ''}".strip()
+                              or f"@{user_obj.username}" if user_obj.username else ""
+                              or str(user_id))
+
+        await memory_manager.add_user_message(bot_id, chat_id, user_id, text, max_history,
+                                              chat_title=chat_title)
         messages = await memory_manager.get_context_messages(bot_id, chat_id, system_prompt, max_history)
 
         # 工具调用：如果启用了插件，传给 LLM 自动决策
         tools = plugin_registry.get_tool_definitions()
         if tools:
             async def tool_handler(name, args):
-                # 将所有参数传给插件（cli 需要 command，web_search 需要 query 等）
-                return await plugin_registry.execute(name, args, {"user_id": user_id, "chat_id": chat_id})
+                return await plugin_registry.execute(name, args, {
+                    "user_id": user_id,
+                    "chat_id": chat_id,
+                    "bot_id": bot_id,
+                    "bot": context.bot,
+                    "update": update,
+                })
             result = await llm_manager.chat_with_tools(messages, tools, tool_handler, max_tokens=2000, allowed_model_ids=allowed_models)
         else:
             result = await llm_manager.chat(messages, max_tokens=2000, allowed_model_ids=allowed_models)
@@ -146,6 +163,12 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = str(chat.id)
     user_id = user.id
+
+    # 黑名单拦截
+    if await is_blacklisted(user_id):
+        logger.info(f"黑名单用户 {user_id} 发送图片，已忽略")
+        return
+
     bot_token = context.bot.token
     bot_id = await _get_bot_id(bot_token)
     allowed_models = await get_bot_allowed_models(bot_token)
@@ -216,7 +239,14 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         sender_name = (f"{user.first_name or ''} {user.last_name or ''}".strip()
                        or user.username or str(user_id))
         text_pfx = f"[{sender_name}]: " if chat.type in ("group", "supergroup") else ""
-        await memory_manager.add_user_message(bot_id, chat_id, user_id, f"{text_pfx}[图片] {caption}", max_history)
+        # 构造会话标题
+        chat_title = chat.title if chat.type in ("group", "supergroup", "channel") else (
+            (f"{user.first_name or ''} {user.last_name or ''}".strip()
+             or f"@{user.username}" if user.username else ""
+             or str(user_id))
+        )
+        await memory_manager.add_user_message(bot_id, chat_id, user_id, f"{text_pfx}[图片] {caption}", max_history,
+                                              chat_title=chat_title)
         model_name = result.model or "unknown"
         await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, tokens=result.total_tokens, max_history=max_history)
         await record_usage(chat_id, user_id, model_name, result.total_tokens)

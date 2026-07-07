@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     bot_id INTEGER DEFAULT 0,
     chat_id TEXT NOT NULL,
     user_id INTEGER NOT NULL,
+    chat_title TEXT DEFAULT '',
     model TEXT DEFAULT '',
     message_count INTEGER DEFAULT 0,
     total_tokens INTEGER DEFAULT 0,
@@ -118,7 +119,8 @@ INSERT OR IGNORE INTO plugin_configs (name, enabled) VALUES
     ('image_understand', 1),
     ('image_gen', 0),
     ('cli', 1),
-    ('memos', 1);
+    ('memos', 1),
+    ('relay', 1);
 
 CREATE INDEX IF NOT EXISTS idx_conversations_bot_chat ON conversations(bot_id, chat_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);

@@ -635,11 +635,33 @@ async def remove_bl(req: BlacklistReq, user=Depends(get_current_user)):
 @app.get("/api/sessions")
 async def get_sessions(user=Depends(get_current_user)):
     from storage.database import get_db
+    from core.bot_manager import bot_manager
     db = await get_db()
     try:
         cursor = await db.execute("SELECT * FROM sessions ORDER BY updated_at DESC LIMIT 50")
         rows = await cursor.fetchall()
-        return {"sessions": [dict(r) for r in rows]}
+        sessions = [dict(r) for r in rows]
+
+        # 解析缺失的 chat_title（历史数据）
+        need_resolve = [s for s in sessions if not s.get("chat_title")]
+        if need_resolve and bot_manager._apps:
+            bot = next(iter(bot_manager._apps.values())).bot  # 用任意一个运行中的 Bot
+            for s in need_resolve:
+                try:
+                    chat = await bot.get_chat(s["chat_id"])
+                    title = chat.title if chat.type in ("group", "supergroup", "channel") else (
+                        chat.first_name or f"@{chat.username}" if chat.username else str(s["chat_id"])
+                    )
+                    s["chat_title"] = title
+                    await db.execute(
+                        "UPDATE sessions SET chat_title = ? WHERE bot_id = ? AND chat_id = ?",
+                        (title, s["bot_id"], s["chat_id"])
+                    )
+                except Exception:
+                    pass  # Bot 可能不在该群/无权限，保持空值
+            await db.commit()
+
+        return {"sessions": sessions}
     finally:
         await db.close()
 
