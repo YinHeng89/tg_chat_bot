@@ -190,7 +190,7 @@ async def _heartbeat_tick():
     now = get_now()
     now_str = now.strftime("%Y-%m-%d %H:%M")
     global _heartbeat_last
-    if _heartbeat_last == now_str[: len(now_str) - 1]:  # 同一分钟内不重复
+    if _heartbeat_last and _heartbeat_last == now_str:  # 同一分钟内不重复
         return
 
     if _heartbeat_last:
