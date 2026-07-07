@@ -292,12 +292,12 @@ export default function Tasks() {
           </label>
         </div>
         <div className="form-group">
-          <label className="form-label">Bark Key *</label>
+          <label className="form-label">Bark 推送地址 *</label>
           <input className="form-input" value={heartbeat.bark_key}
             onChange={e => setHeartbeat({ ...heartbeat, bark_key: e.target.value })}
-            placeholder="Bark App 中的设备 Key" />
+            placeholder="设备 Key 或完整 URL（如 uecwxxx 或 https://bark.example.com/uecwxxx）" />
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-            在 Bark App 首页复制 URL 中 <code>day.app/</code> 后面的那串字符
+            官方服务填设备 Key，自建服务填完整地址
           </div>
         </div>
         <div className="form-group">

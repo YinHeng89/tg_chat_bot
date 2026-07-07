@@ -176,7 +176,6 @@ def _calc_next_fire(repeat_rule: str) -> str:
 # ===== Bark 心跳 =====
 
 _heartbeat_last: str = ""
-BARK_API = "https://api.day.app/push"
 
 
 async def _heartbeat_tick():
@@ -205,11 +204,23 @@ async def _heartbeat_tick():
 
 
 async def _send_heartbeat():
-    """通过 Bark 推送心跳通知。"""
-    bark_key = await get_setting("heartbeat_bark_key", "")
-    if not bark_key:
-        logger.debug("心跳未配置 Bark Key，跳过")
+    """通过 Bark 推送心跳通知（自动识别官方/自建服务）。"""
+    raw = await get_setting("heartbeat_bark_key", "")
+    if not raw:
+        logger.debug("心跳未配置 Bark 推送地址，跳过")
         return
+
+    raw = raw.strip()
+    if raw.startswith("http"):
+        # 自建服务完整 URL：https://bark.example.com/KEY
+        url_parts = raw.split("//", 1)[-1].split("/")
+        bark_key = url_parts[-1] if url_parts[-1] else ""
+        server = raw.rsplit("/", 1)[0]
+        api_url = f"{server}/push" if not server.endswith("/push") else server
+    else:
+        # 官方服务：纯设备 Key
+        bark_key = raw
+        api_url = "https://api.day.app/push"
 
     stats = await get_stats(days=1)
     now = get_now()
@@ -222,8 +233,8 @@ async def _send_heartbeat():
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.post(BARK_API, json={
-                "device_key": bark_key,
+            resp = await client.post(api_url, json={
+                "device_key": bark_key.strip(),
                 "title": title,
                 "body": body,
                 "group": "TG Bot",
@@ -231,6 +242,7 @@ async def _send_heartbeat():
             if resp.status_code == 200:
                 logger.info("心跳已推送到 Bark")
             else:
-                logger.warning(f"Bark 推送失败: {resp.status_code} {resp.text[:100]}")
+                err_text = resp.text[:200] if len(resp.text) > 200 else resp.text
+                logger.warning(f"Bark 推送失败: {resp.status_code} {err_text}")
     except Exception as e:
         logger.warning(f"Bark 推送异常: {e}")
