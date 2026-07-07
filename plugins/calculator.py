@@ -17,6 +17,7 @@ class CalculatorPlugin(BasePlugin):
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
         ast.Div: operator.truediv,
+        ast.FloorDiv: operator.floordiv,
         ast.Pow: operator.pow,
         ast.Mod: operator.mod,
         ast.USub: operator.neg,
@@ -85,9 +86,12 @@ class CalculatorPlugin(BasePlugin):
             return "请提供计算表达式，例如: /calc 1024 * 768"
 
         # 清理表达式
-        expr = expr.strip()
+        original = expr.strip()
+        expr = original
         if expr.startswith("计算"):
             expr = expr[2:].strip()
+        # 用户常用 ^ 表示乘方，转为 Python 的 ** 运算符
+        expr = expr.replace("^", "**")
 
         try:
             tree = ast.parse(expr, mode="eval")
@@ -99,10 +103,10 @@ class CalculatorPlugin(BasePlugin):
                 else:
                     result = round(result, 10)
 
-            return f"{expr} = {result}"
+            return f"{original} = {result}"
 
         except SyntaxError:
-            return f"表达式 '{expr}' 格式不正确"
+            return f"表达式 '{original}' 格式不正确"
         except (ValueError, ZeroDivisionError) as e:
             return f"计算错误: {e}"
         except Exception as e:

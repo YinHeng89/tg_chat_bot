@@ -15,7 +15,8 @@ class ChatResult:
         self.text = text
         self.prompt_tokens = prompt_tokens
         self.completion_tokens = completion_tokens
-        self.model = model  # 实际使用的模型名称
+        self.model = model
+        self.tools_used: list[str] = []  # 本次对话中成功调用的工具名
 
     @property
     def total_tokens(self) -> int:
@@ -241,20 +242,23 @@ class LLMManager:
         if not self.backends:
             return await self.chat(messages, allowed_model_ids=allowed_model_ids, **kwargs)
 
+        used_tools: list[str] = []
+
         for _ in range(max_rounds):
             result = await self.chat(messages, tools=tools, allowed_model_ids=allowed_model_ids, **kwargs)
             if not result.tool_calls:
+                result.tools_used = used_tools
                 return result
 
-            # 添加 assistant 消息（含 tool_calls）
             messages.append(result.message)
 
-            # 执行每个工具调用
             for tc in result.tool_calls:
                 tool_name = tc["name"]
                 try:
                     tool_result = await tool_handler(tool_name, tc["args"])
                     logger.info(f"工具调用: {tool_name} → {str(tool_result)[:100]}")
+                    if tool_name not in used_tools:
+                        used_tools.append(tool_name)
                 except Exception as e:
                     tool_result = f"错误: {e}"
                     logger.error(f"工具 {tool_name} 失败: {e}")
@@ -266,6 +270,7 @@ class LLMManager:
 
         # 最后一轮不传 tools
         result = await self.chat(messages, allowed_model_ids=allowed_model_ids, **kwargs)
+        result.tools_used = used_tools
         return result
 
 

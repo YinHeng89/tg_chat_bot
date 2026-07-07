@@ -106,6 +106,11 @@ async def handle_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         reply = result.text or "抱歉，我没能生成有效的回复。"
         model_name = result.model or "unknown"
+
+        # 在回复末尾附加调用的工具标签，方便确认插件是否生效
+        if getattr(result, "tools_used", None):
+            tags = " ".join(f"#{t}" for t in result.tools_used)
+            reply = f"{reply}\n\n── {tags}"
         await memory_manager.add_assistant_message(bot_id, chat_id, user_id, reply, model=model_name, tokens=result.total_tokens, max_history=max_history)
         await record_usage(chat_id, user_id, model_name, result.total_tokens)
 
@@ -235,6 +240,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = await llm_manager.chat(messages, max_tokens=2000, allowed_model_ids=photo_model_ids)
 
         reply = result.text or "抱歉，图片分析失败。"
+        reply = f"{reply}\n\n── #image_understand"
         sender_name = (f"{user.first_name or ''} {user.last_name or ''}".strip()
                        or user.username or str(user_id))
         text_pfx = f"[{sender_name}]: " if chat.type in ("group", "supergroup") else ""
