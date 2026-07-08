@@ -38,36 +38,43 @@ class BotManager:
     async def _start_one(self, bot_id: int, token: str):
         if bot_id in self._apps:
             return
-        try:
-            app = self._build_app(token)
-            await app.initialize()
-            await app.bot.delete_webhook(drop_pending_updates=True)
-            await app.start()
-            await app.updater.start_polling(
-                poll_interval=1.0,
-                timeout=30,
-                bootstrap_retries=-1,  # 无限重试
-            )
-            info = await app.bot.get_me()
-            self._apps[bot_id] = app
-            logger.info(f"Bot #{bot_id} @{info.username} 已上线")
-        except Exception as e:
-            logger.warning(f"Bot #{bot_id} 暂时无法启动（网络连接中，后台会自动重试）: {e}")
-            # Conflict 时等待 5 秒再试一次
-            if "Conflict" in str(e):
-                logger.info(f"Bot #{bot_id} Conflict，5秒后重试...")
-                await asyncio.sleep(5)
-                try:
-                    app = self._build_app(token)
-                    await app.initialize()
-                    await app.bot.delete_webhook(drop_pending_updates=True)
-                    await app.start()
-                    await app.updater.start_polling(poll_interval=1.0, timeout=30, bootstrap_retries=-1)
-                    info = await app.bot.get_me()
-                    self._apps[bot_id] = app
-                    logger.info(f"Bot #{bot_id} @{info.username} 已上线（重试成功）")
-                except Exception as e2:
-                    logger.warning(f"Bot #{bot_id} 暂时无法连接 Telegram，稍后会继续尝试: {e2}")
+
+        max_retries = 5
+        backoff = 10  # 秒
+
+        for attempt in range(max_retries + 1):
+            try:
+                if attempt > 0:
+                    logger.info(f"Bot #{bot_id} 重试启动 (第 {attempt}/{max_retries} 次)...")
+                app = self._build_app(token)
+                await app.initialize()
+                await app.bot.delete_webhook(drop_pending_updates=True)
+                await app.start()
+                await app.updater.start_polling(
+                    poll_interval=1.0,
+                    timeout=30,
+                    bootstrap_retries=-1,
+                )
+                info = await app.bot.get_me()
+                self._apps[bot_id] = app
+                suffix = f"（重试 {attempt} 次后成功）" if attempt > 0 else ""
+                logger.info(f"Bot #{bot_id} @{info.username} 已上线{suffix}")
+                return
+            except Exception as e:
+                err_str = str(e).lower()
+                is_network = any(k in err_str for k in ("connecterror", "timeout", "network", "connection"))
+                is_conflict = "conflict" in err_str
+
+                if attempt < max_retries and (is_network or is_conflict):
+                    if is_conflict:
+                        logger.info(f"Bot #{bot_id} Conflict，{backoff}秒后重试...")
+                    else:
+                        logger.warning(f"Bot #{bot_id} 网络异常 ({type(e).__name__})，{backoff}秒后重试...")
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 60)  # 指数退避，最多 60s
+                    continue
+
+                logger.warning(f"Bot #{bot_id} 启动失败: {e}")
 
     async def _stop_one(self, bot_id: int):
         app = self._apps.pop(bot_id, None)
