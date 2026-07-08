@@ -184,6 +184,7 @@ def _calc_next_fire(repeat_rule: str) -> str:
 # ===== Bark 心跳 =====
 
 _heartbeat_last: str = ""
+_last_running_count: int = -1  # 用于检测 Bot 上下线
 
 
 async def _heartbeat_tick():
@@ -212,7 +213,7 @@ async def _heartbeat_tick():
 
 
 async def _send_heartbeat():
-    """通过 Bark 推送心跳通知（自动识别官方/自建服务）。"""
+    """通过 Bark 推送心跳通知，含 Bot 上下线告警（自动识别官方/自建服务）。"""
     raw = await get_setting("heartbeat_bark_key", "")
     if not raw:
         logger.debug("心跳未配置 Bark 推送地址，跳过")
@@ -220,24 +221,52 @@ async def _send_heartbeat():
 
     raw = raw.strip()
     if raw.startswith("http"):
-        # 自建服务完整 URL：https://bark.example.com/KEY
         url_parts = raw.split("//", 1)[-1].split("/")
         bark_key = url_parts[-1] if url_parts[-1] else ""
         server = raw.rsplit("/", 1)[0]
         api_url = f"{server}/push" if not server.endswith("/push") else server
     else:
-        # 官方服务：纯设备 Key
         bark_key = raw
         api_url = "https://api.day.app/push"
 
     stats = await get_stats(days=1)
     now = get_now()
-    title = f"💓 Bot 存活 — {bot_manager.running_count} 实例运行中"
-    body = (
-        f"时间: {now.strftime('%H:%M:%S')}\n"
-        f"近24h: {stats['total_messages']} 条消息 / {stats['unique_users']} 个用户\n"
-        f"群聊: {stats['active_chats']} | Token: {stats['total_tokens']}"
-    )
+    running_count = bot_manager.running_count
+
+    # 获取所有配置的 Bot 信息
+    from storage.database import get_bots
+    all_bots = await get_bots()
+    active_bots = [b for b in all_bots if b.get("is_active")]
+    running_ids = set(bot_manager._apps.keys())
+
+    # 检测上下线变化
+    global _last_running_count
+    alert = ""
+    if _last_running_count >= 0 and _last_running_count != running_count:
+        if running_count < _last_running_count:
+            lost = _last_running_count - running_count
+            alert = f"🔴 {lost} 个 Bot 已离线！"
+        else:
+            gained = running_count - _last_running_count
+            alert = f"🟢 {gained} 个 Bot 已上线"
+    _last_running_count = running_count
+
+    # 列出不在线的活跃 Bot
+    offline_bots = []
+    for b in active_bots:
+        if b["id"] not in running_ids:
+            offline_bots.append(f"#{b['id']} {b['name']}")
+
+    # 构建消息
+    title = f"💓 {'⚠️ ' if alert else ''}Bot 存活 — {running_count}/{len(active_bots)} 实例"
+    parts = [f"⏰ {now.strftime('%H:%M:%S')}"]
+    if alert:
+        parts.append(alert)
+    if offline_bots:
+        parts.append(f"离线 Bot: {', '.join(offline_bots)}")
+    parts.append(f"近24h: {stats['total_messages']} 消息 / {stats['unique_users']} 用户 / {stats['active_chats']} 群聊")
+    parts.append(f"Token: {stats['total_tokens']}")
+    body = "\n".join(parts)
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
