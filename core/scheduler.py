@@ -92,13 +92,19 @@ async def _fire_task(task: dict, on_restart: bool = False):
     # AI 生成提醒文案，失败则用简单模板兜底
     text = await _ai_reminder_text(title, fire_at, created_at, repeat_rule, on_restart)
 
+    # 发送提醒。超时不标记跳过——消息大概率已送达，只是 Telegram ACK 慢了
     try:
-        await app.bot.send_message(chat_id=chat_id, text=text)
-        logger.info(f"任务 #{task_id} 已触发: [{chat_id}] {title} (Bot #{bot_id})")
+        await app.bot.send_message(chat_id=chat_id, text=text, read_timeout=15)
     except Exception as e:
-        logger.error(f"发送任务 #{task_id} 提醒失败: {e}")
-        await mark_task_skipped(task_id)
-        return
+        err = str(e).lower()
+        if "timed out" in err or "timeout" in err:
+            logger.warning(f"任务 #{task_id} 发送超时（消息可能已送达），标记完成: {e}")
+        else:
+            logger.error(f"任务 #{task_id} 发送失败，标记跳过: {e}")
+            await mark_task_skipped(task_id)
+            return
+
+    logger.info(f"任务 #{task_id} 已触发: [{chat_id}] {title} (Bot #{bot_id})")
 
     # 处理重复任务
     if repeat_rule:
